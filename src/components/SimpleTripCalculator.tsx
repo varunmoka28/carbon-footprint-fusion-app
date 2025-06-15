@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,7 +5,6 @@ import * as z from 'zod';
 import { toast } from "sonner";
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -16,18 +14,18 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { VEHICLE_CATEGORIES, FUEL_EMISSION_FACTORS, VehicleId } from '@/lib/constants';
 import { MapPin, Route, Leaf, Fuel, Weight, Repeat, TestTube2, Waypoints } from 'lucide-react';
 
-import { usePincodeData } from '@/hooks/usePincodeData';
+import { usePincodeData, LocationInfo } from '@/hooks/usePincodeData';
 import { calculateDistance } from '@/lib/distance';
 import ResultDisplay, { Result } from './ResultDisplay';
-import { resolveLocation } from '@/lib/locationUtils';
+import { LocationInput } from './LocationInput';
 
 const vehicleIds = Object.keys(VEHICLE_CATEGORIES) as [VehicleId, ...VehicleId[]];
 
 const formSchema = z.discriminatedUnion("calculationMode", [
   z.object({
     calculationMode: z.literal("distance"),
-    origin: z.string().min(3, { message: "Enter a city name or 6-digit pincode." }),
-    destination: z.string().min(3, { message: "Enter a city name or 6-digit pincode." }),
+    origin: z.string().min(1, { message: "Please select an origin." }),
+    destination: z.string().min(1, { message: "Please select a destination." }),
     vehicleType: z.enum(vehicleIds, { required_error: "Please select a vehicle type." }),
     loadWeight: z.coerce.number().positive({ message: "Weight must be positive." }).optional(),
     isRoundTrip: z.boolean().default(false),
@@ -53,7 +51,9 @@ type FormValues = z.infer<typeof formSchema>;
 
 const SimpleTripCalculator = () => {
   const [result, setResult] = useState<Result | null>(null);
-  const { pincodeDb } = usePincodeData();
+  const { locationList, isLoading: isLocationDataLoading } = usePincodeData();
+  const [selectedOrigin, setSelectedOrigin] = useState<LocationInfo | null>(null);
+  const [selectedDestination, setSelectedDestination] = useState<LocationInfo | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -74,26 +74,18 @@ const SimpleTripCalculator = () => {
   const onSubmit = (values: FormValues) => {
     setResult(null);
     if (values.calculationMode === 'distance') {
-      if (!pincodeDb) {
-        toast.error("Pincode data is still loading. Please try again in a moment.");
+      if (!selectedOrigin) {
+        toast.error("Invalid Origin", { description: "Please select a valid origin from the dropdown list." });
+        form.setError("origin", { message: "Please select a location." });
+        return;
+      }
+      if (!selectedDestination) {
+        toast.error("Invalid Destination", { description: "Please select a valid destination from the dropdown list." });
+        form.setError("destination", { message: "Please select a location." });
         return;
       }
       
-      const originData = resolveLocation(values.origin, pincodeDb);
-      const destData = resolveLocation(values.destination, pincodeDb);
-
-      if (!originData) {
-        toast.error("Could not find origin location. Please check the spelling or pincode.");
-        form.setError("origin", { message: "Invalid location" });
-        return;
-      }
-      if (!destData) {
-        toast.error("Could not find destination location. Please check the spelling or pincode.");
-        form.setError("destination", { message: "Invalid location" });
-        return;
-      }
-      
-      let distance = calculateDistance(originData.y, originData.x, destData.y, destData.x);
+      let distance = calculateDistance(selectedOrigin.y, selectedOrigin.x, selectedDestination.y, selectedDestination.x);
       
       if (values.isRoundTrip) {
         distance *= 2;
@@ -110,8 +102,8 @@ const SimpleTripCalculator = () => {
         emissions,
         emissionsPerTonneKm,
         calculationMode: 'distance',
-        origin: originData.resolvedName,
-        destination: destData.resolvedName,
+        origin: `${selectedOrigin.name}, ${selectedOrigin.pincode}`,
+        destination: `${selectedDestination.name}, ${selectedDestination.pincode}`,
         emissionFactorDetails: {
           factor: vehicle.emissionFactor,
           source: vehicle.source,
@@ -141,6 +133,15 @@ const SimpleTripCalculator = () => {
     toast.error("Please review the form for errors.");
   }
 
+  const handleModeChange = (value: 'distance' | 'fuel') => {
+    if (value) {
+      form.reset({ calculationMode: value });
+      setResult(null);
+      setSelectedOrigin(null);
+      setSelectedDestination(null);
+    }
+  }
+
   return (
     <div className="flex justify-center items-start py-12 px-4">
       <Card className="w-full max-w-md shadow-lg">
@@ -162,13 +163,7 @@ const SimpleTripCalculator = () => {
                       <ToggleGroup
                         type="single"
                         defaultValue={field.value}
-                        onValueChange={(value) => {
-                          if (value) {
-                            field.onChange(value);
-                            setResult(null);
-                            form.reset({ calculationMode: value as 'distance' | 'fuel' });
-                          }
-                        }}
+                        onValueChange={(value) => handleModeChange(value as 'distance' | 'fuel')}
                         className="grid grid-cols-2"
                       >
                         <ToggleGroupItem value="distance" aria-label="Calculate by distance">
@@ -186,10 +181,54 @@ const SimpleTripCalculator = () => {
               {calculationMode === 'distance' && (
                 <div className="space-y-4 animate-fade-in">
                   <FormField control={form.control} name="origin" render={({ field }) => (
-                    <FormItem><FormLabel>Origin</FormLabel><div className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><FormControl><Input placeholder="e.g. Mumbai or 400001" className="pl-10" {...field} /></FormControl></div><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Origin</FormLabel>
+                      <FormControl>
+                        <LocationInput
+                          locations={locationList}
+                          value={field.value}
+                          onChange={(value) => {
+                            field.onChange(value);
+                            if (selectedOrigin && value !== `${selectedOrigin.name}, ${selectedOrigin.district}`) {
+                                setSelectedOrigin(null);
+                            }
+                          }}
+                          onLocationSelect={(location) => {
+                            setSelectedOrigin(location);
+                            field.onChange(`${location.name}, ${location.district}`);
+                            form.clearErrors("origin");
+                          }}
+                          placeholder="Type a city or pincode..."
+                          Icon={MapPin}
+                          disabled={isLocationDataLoading}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )} />
                   <FormField control={form.control} name="destination" render={({ field }) => (
-                    <FormItem><FormLabel>Destination</FormLabel><div className="relative"><Route className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><FormControl><Input placeholder="e.g. Delhi or 110001" className="pl-10" {...field} /></FormControl></div><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Destination</FormLabel>
+                      <FormControl>
+                        <LocationInput
+                          locations={locationList}
+                          value={field.value}
+                          onChange={(value) => {
+                            field.onChange(value);
+                            if (selectedDestination && value !== `${selectedDestination.name}, ${selectedDestination.district}`) {
+                                setSelectedDestination(null);
+                            }
+                          }}
+                          onLocationSelect={(location) => {
+                            setSelectedDestination(location);
+                            field.onChange(`${location.name}, ${location.district}`);
+                            form.clearErrors("destination");
+                          }}
+                          placeholder="Type a city or pincode..."
+                          Icon={Route}
+                          disabled={isLocationDataLoading}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )} />
                   <FormField control={form.control} name="vehicleType" render={({ field }) => (
                      <FormItem>
@@ -229,8 +268,8 @@ const SimpleTripCalculator = () => {
                 </div>
               )}
 
-              <Button type="submit" className="w-full bg-eco-green hover:bg-eco-green-dark text-white font-bold py-3 text-base" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "Calculating..." : "Calculate Emissions"}
+              <Button type="submit" className="w-full bg-eco-green hover:bg-eco-green-dark text-white font-bold py-3 text-base" disabled={form.formState.isSubmitting || isLocationDataLoading}>
+                {isLocationDataLoading ? "Loading Location Data..." : form.formState.isSubmitting ? "Calculating..." : "Calculate Emissions"}
               </Button>
             </form>
           </Form>
