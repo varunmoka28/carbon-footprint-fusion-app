@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import Papa from 'papaparse';
 import FileUpload from './FileUpload';
@@ -61,7 +62,7 @@ const CarbonIQDashboard = () => {
       }
 
       const vehicleMap = new Map();
-      const vehicleIdKeys = ['vehicle_id', 'vehicleid', 'id', 'truck_id'];
+      const vehicleIdKeys = ['vehiclenumber', 'vehicleno', 'regno', 'vehicleid'];
       const vehicleClassKeys = ['class', 'vehicle_class', 'type', 'vehicle_type'];
       
       const vehicleIdKey = findKey(vehiclesData[0], vehicleIdKeys);
@@ -72,7 +73,7 @@ const CarbonIQDashboard = () => {
 
       vehiclesData.forEach((v: any) => vehicleMap.set(String(v[vehicleIdKey]), v[vehicleClassKey]));
       
-      const tripVehicleIdKeys = ['vehicle_id', 'vehicleid', 'id', 'truck_id'];
+      const tripVehicleIdKeys = ['vehiclenumber', 'vehicleno', 'regno', 'vehicleid'];
       const distanceKeys = ['distance', 'distance_km', 'km'];
       const tripIdKeys = ['trip_id', 'tripid'];
 
