@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import Papa from 'papaparse';
 import FileUpload from './FileUpload';
@@ -6,7 +5,7 @@ import KPICard from './KPICard';
 import EmissionsChart from './EmissionsChart';
 import TripDataTable, { ProcessedTrip } from './TripDataTable';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, ArrowRight, BarChart, Route, Tractor } from 'lucide-react';
+import { AlertCircle, ArrowRight, BarChart, Info, Route, Tractor } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 // Emission factors in kg CO2e/km
@@ -24,11 +23,13 @@ const CarbonIQDashboard = () => {
   const [report, setReport] = useState<ProcessedTrip[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [assumptionNotes, setAssumptionNotes] = useState<string[]>([]);
 
   const handleFileUpload = (file: File, type: 'trips' | 'vehicles') => {
     setFiles(prev => ({ ...prev, [type]: file }));
     setReport([]);
     setError(null);
+    setAssumptionNotes([]);
   };
   
   // A simplified semantic matcher
@@ -49,6 +50,7 @@ const CarbonIQDashboard = () => {
     }
     setIsLoading(true);
     setError(null);
+    setAssumptionNotes([]);
 
     try {
       const tripsData = await parseCsv(files.trips);
@@ -69,9 +71,12 @@ const CarbonIQDashboard = () => {
       const vehicleClassKey = findKey(vehiclesData[0], vehicleClassKeys);
 
       if (!vehicleIdKey) throw new Error(`Vehicles CSV Error: Missing vehicle identifier. Expected a column like: ${vehicleIdKeys.join(', ')}.`);
-      if (!vehicleClassKey) throw new Error(`Vehicles CSV Error: Missing vehicle class. Expected a column like: ${vehicleClassKeys.join(', ')}.`);
-
-      vehiclesData.forEach((v: any) => vehicleMap.set(String(v[vehicleIdKey]), v[vehicleClassKey]));
+      
+      if (!vehicleClassKey) {
+        setAssumptionNotes(prev => [...prev, "The 'vehicle class' column was not found in your vehicles file. All vehicles have been assumed to be 'HGV' for a conservative emission estimate."]);
+      } else {
+        vehiclesData.forEach((v: any) => vehicleMap.set(String(v[vehicleIdKey]), v[vehicleClassKey]));
+      }
       
       const tripVehicleIdKeys = ['vehiclenumber', 'vehicleno', 'regno', 'vehicleid'];
       const distanceKeys = ['distance', 'distance_km', 'km'];
@@ -88,7 +93,7 @@ const CarbonIQDashboard = () => {
       const processedData: ProcessedTrip[] = tripsData.map((trip: any) => {
         const vehicle_id = String(trip[tripVehicleIdKey]);
         const distance_km = parseFloat(trip[distanceKey]);
-        const vehicle_class_raw = vehicleMap.get(vehicle_id) || 'UNKNOWN';
+        const vehicle_class_raw = vehicleClassKey ? (vehicleMap.get(vehicle_id) || 'UNKNOWN') : 'HGV';
         const vehicle_class = (Object.keys(EMISSION_FACTORS).includes(vehicle_class_raw.toUpperCase()) ? vehicle_class_raw.toUpperCase() : 'UNKNOWN') as VehicleType;
 
         return {
@@ -154,6 +159,19 @@ const CarbonIQDashboard = () => {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      {assumptionNotes.length > 0 && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertTitle>Assumptions Made</AlertTitle>
+          <AlertDescription>
+            <ul className="list-disc list-inside">
+              {assumptionNotes.map((note, index) => (
+                <li key={index}>{note}</li>
+              ))}
+            </ul>
+          </AlertDescription>
         </Alert>
       )}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
