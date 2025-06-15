@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, BookOpen, Route, Weight, FileWarning, HelpCircle, TrendingDown } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { VEHICLE_CATEGORIES } from '@/lib/constants';
 
 const Methodology = () => {
   const emissionFactors = [
@@ -67,28 +68,30 @@ const Methodology = () => {
             </div>
             <h3 className="font-semibold text-lg mb-2">Emission Factors</h3>
             <p className="text-muted-foreground mb-4">
-              We use standardized emission factors based on vehicle category. These factors represent the average emissions per kilometer for a typical vehicle in that class.
+              We use standardized emission factors based on vehicle category, aligned with common Indian vehicle types. These factors represent the average emissions per kilometer for a typical vehicle in that class.
             </p>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Vehicle Category</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Emission Factor</TableHead>
+                  <TableHead>Gross Vehicle Weight (GVW)</TableHead>
+                  <TableHead>Max Payload</TableHead>
+                  <TableHead className="text-right">Emission Factor (kg CO₂e/km)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {emissionFactors.map((ef) => (
-                  <TableRow key={ef.category}>
-                    <TableCell className="font-medium">{ef.category}</TableCell>
-                    <TableCell className="text-muted-foreground">{ef.description}</TableCell>
-                    <TableCell className="text-right font-mono">{ef.factor}</TableCell>
+                {Object.values(VEHICLE_CATEGORIES).map((vehicle) => (
+                  <TableRow key={vehicle.name}>
+                    <TableCell className="font-medium">{vehicle.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{vehicle.gvw}</TableCell>
+                    <TableCell className="text-muted-foreground">{vehicle.maxPayload} tonnes</TableCell>
+                    <TableCell className="text-right font-mono">{vehicle.emissionFactor.toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
             <p className="text-xs text-muted-foreground mt-4">
-              Source: Emission factors are derived from industry standards like the GLEC Framework and are subject to regional and operational variations. The values used here are illustrative for demonstration.
+              Source: Emission factors are derived from industry standards like the GLEC Framework and are adapted for common vehicle types in the Indian market. Values are illustrative for demonstration.
             </p>
           </CardContent>
         </Card>
@@ -145,7 +148,7 @@ const Methodology = () => {
                 <strong>Distance Calculation:</strong> If trip distance is not provided in the uploaded data, it is estimated using the straight-line (Haversine) distance between the source and destination pincodes, plus a circuity factor of 25% to account for actual road networks.
               </li>
               <li>
-                <strong>Vehicle Data:</strong> If vehicle category or fuel type is missing for a given vehicle number, the system applies a default emission factor corresponding to a Medium Goods Vehicle (MGV).
+                <strong>Vehicle Data:</strong> If vehicle category is missing, the system applies a default emission factor corresponding to a Light Commercial Vehicle (LCV). The load weight entered is validated against the selected vehicle's maximum payload capacity.
               </li>
               <li>
                 <strong>Data Completeness:</strong> The accuracy of the report is directly dependent on the quality and completeness of the uploaded trip and vehicle data.

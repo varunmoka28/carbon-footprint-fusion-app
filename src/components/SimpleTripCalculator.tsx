@@ -11,22 +11,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { EMISSION_FACTORS, FUEL_EMISSION_FACTORS } from '@/lib/constants';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { VEHICLE_CATEGORIES, FUEL_EMISSION_FACTORS, VehicleId } from '@/lib/constants';
 import { MapPin, Route, Leaf, Fuel, Weight, Repeat, TestTube2, Waypoints } from 'lucide-react';
 
 import { usePincodeData } from '@/hooks/usePincodeData';
 import { calculateDistance } from '@/lib/distance';
 import ResultDisplay, { Result } from './ResultDisplay';
 
+const vehicleIds = Object.keys(VEHICLE_CATEGORIES) as [VehicleId, ...VehicleId[]];
+
 const formSchema = z.discriminatedUnion("calculationMode", [
   z.object({
     calculationMode: z.literal("distance"),
     origin: z.string().min(1, { message: "Origin is required." }).regex(/\b(\d{6})\b/, { message: "Origin must contain a 6-digit pincode." }),
     destination: z.string().min(1, { message: "Destination is required." }).regex(/\b(\d{6})\b/, { message: "Destination must contain a 6-digit pincode." }),
-    vehicleType: z.enum(['LGV', 'MGV', 'HGV'], { required_error: "Please select a vehicle type." }),
+    vehicleType: z.enum(vehicleIds, { required_error: "Please select a vehicle type." }),
     loadWeight: z.coerce.number().positive({ message: "Weight must be positive." }).optional(),
     isRoundTrip: z.boolean().default(false),
+  }).refine(data => {
+    // If there's a load weight and a vehicle type, check if the weight is within the vehicle's max payload.
+    if (data.loadWeight && data.vehicleType) {
+      return data.loadWeight <= VEHICLE_CATEGORIES[data.vehicleType].maxPayload;
+    }
+    // If no weight is entered, validation passes.
+    return true;
+  }, {
+    message: "Load weight exceeds the selected vehicle's maximum payload.",
+    path: ["loadWeight"], // Apply the error message to the loadWeight field
   }),
   z.object({
     calculationMode: z.literal("fuel"),
@@ -47,12 +59,15 @@ const SimpleTripCalculator = () => {
       calculationMode: 'distance',
       origin: '',
       destination: '',
+      vehicleType: 'LCV', // A sensible default
       isRoundTrip: false,
     },
   });
 
   const calculationMode = form.watch('calculationMode');
   const fuelType = form.watch('fuelType' as 'fuelType');
+  const selectedVehicleId = form.watch('vehicleType' as 'vehicleType'); // Watch for changes
+  const selectedVehicle = selectedVehicleId ? VEHICLE_CATEGORIES[selectedVehicleId] : null;
 
   // Simulate an API call to get distance as a fallback
   const getSimulatedDistance = () => Math.floor(Math.random() * (1000 - 50)) + 50;
@@ -82,7 +97,7 @@ const SimpleTripCalculator = () => {
       if (values.isRoundTrip) {
         distance *= 2;
       }
-      const emissions = distance * EMISSION_FACTORS[values.vehicleType];
+      const emissions = distance * VEHICLE_CATEGORIES[values.vehicleType].emissionFactor;
       let emissionsPerTonneKm;
       if (values.loadWeight && values.loadWeight > 0) {
         emissionsPerTonneKm = emissions / (distance * values.loadWeight);
@@ -151,7 +166,22 @@ const SimpleTripCalculator = () => {
                     <FormItem><div className="relative"><Route className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><FormControl><Input placeholder="Destination, e.g. Delhi 110001" className="pl-10" {...field} /></FormControl></div><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="vehicleType" render={({ field }) => (
-                     <FormItem><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select Vehicle Type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="LGV">Light Goods Vehicle (LGV)</SelectItem><SelectItem value="MGV">Medium Goods Vehicle (MGV)</SelectItem><SelectItem value="HGV">Heavy Goods Vehicle (HGV)</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                     <FormItem>
+                       <Select onValueChange={field.onChange} defaultValue={field.value}>
+                         <FormControl><SelectTrigger><SelectValue placeholder="Select Vehicle Type" /></SelectTrigger></FormControl>
+                         <SelectContent>
+                           {Object.entries(VEHICLE_CATEGORIES).map(([id, { name, gvw }]) => (
+                             <SelectItem key={id} value={id}>{name} ({gvw})</SelectItem>
+                           ))}
+                         </SelectContent>
+                       </Select>
+                       {selectedVehicle && (
+                         <FormDescription>
+                           Max Payload: {selectedVehicle.maxPayload} tonnes.
+                         </FormDescription>
+                       )}
+                       <FormMessage />
+                     </FormItem>
                   )} />
                    <FormField control={form.control} name="loadWeight" render={({ field }) => (
                     <FormItem><div className="relative"><Weight className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><FormControl><Input type="number" placeholder="Load Weight (tonnes) (Optional)" className="pl-10" {...field} value={field.value ?? ''} onChange={event => field.onChange(event.target.value === '' ? undefined : +event.target.value)} /></FormControl></div><FormMessage /></FormItem>
