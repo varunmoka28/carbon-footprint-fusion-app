@@ -10,8 +10,10 @@ export type VehicleType = keyof typeof EMISSION_FACTORS;
 
 // Emission factors for fuels
 export const FUEL_EMISSION_FACTORS = {
-  'Diesel': 2.68, // kg CO2e/liter
-  'CNG': 2.75,    // kg CO2e/kg
+  'Diesel': 2.68,      // kg CO2e/liter
+  'CNG': 2.75,         // kg CO2e/kg
+  'Petrol': 2.31,      // kg CO2e/liter
+  'Electricity': 0.75, // kg CO2e/kWh (Grid average)
 };
 
 export type FuelType = keyof typeof FUEL_EMISSION_FACTORS;

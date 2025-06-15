@@ -1,7 +1,6 @@
 
 import React from 'react';
-import IndiaMap from './IndiaMap';
-import { PincodeDB } from '@/hooks/usePincodeData';
+// The IndiaMap and PincodeDB imports are no longer needed.
 
 export type Result = {
   emissions: number;
@@ -12,17 +11,16 @@ export type Result = {
   destination?: string;
 };
 
-interface ResultDisplayProps extends Result {
-    pincodeDb: PincodeDB | null;
-}
+// The pincodeDb prop is no longer needed.
+interface ResultDisplayProps extends Result {}
 
-const ResultDisplay = ({ emissions, distance, emissionsPerTonneKm, calculationMode, origin, destination, pincodeDb }: ResultDisplayProps) => (
+const ResultDisplay = ({ emissions, distance, emissionsPerTonneKm, calculationMode }: ResultDisplayProps) => (
   <div className="mt-6 p-6 bg-slate-100 rounded-lg animate-fade-in space-y-4">
     <div className="text-center">
       <p className="font-poppins text-3xl font-bold text-eco-green-dark">{emissions.toFixed(2)} kg CO₂e</p>
       <p className="text-sm text-muted-foreground">Total Emissions</p>
     </div>
-    <div className="flex justify-between items-start pt-4 border-t text-center w-full gap-4">
+    <div className="flex justify-around items-start pt-4 border-t text-center w-full gap-4">
       {calculationMode === 'distance' && typeof distance !== 'undefined' && (
         <div className="flex-1">
           <p className="font-bold text-lg">{distance.toFixed(0)} km</p>
@@ -35,14 +33,7 @@ const ResultDisplay = ({ emissions, distance, emissionsPerTonneKm, calculationMo
           <p className="text-sm text-muted-foreground">kg CO₂e/t-km</p>
         </div>
       )}
-      {calculationMode === 'distance' && (
-        <div className="flex-1">
-          <div className="w-full h-24 bg-slate-200 rounded-md flex items-center justify-center mx-auto">
-             <IndiaMap origin={origin} destination={destination} pincodeDb={pincodeDb} />
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">Route Visualization</p>
-        </div>
-      )}
+      {/* The route visualization component has been removed from here. */}
     </div>
   </div>
 );

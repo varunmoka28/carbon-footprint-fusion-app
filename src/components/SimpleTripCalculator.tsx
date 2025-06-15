@@ -31,7 +31,7 @@ const formSchema = z.discriminatedUnion("calculationMode", [
   z.object({
     calculationMode: z.literal("fuel"),
     fuelConsumed: z.coerce.number().positive({ message: "Must be a positive number." }),
-    fuelType: z.enum(['Diesel', 'CNG'], { required_error: "Please select a fuel type." }),
+    fuelType: z.enum(['Diesel', 'CNG', 'Petrol', 'Electricity'], { required_error: "Please select a fuel type." }),
   }),
 ]);
 
@@ -165,10 +165,10 @@ const SimpleTripCalculator = () => {
               {calculationMode === 'fuel' && (
                 <div className="space-y-4 animate-fade-in">
                   <FormField control={form.control} name="fuelType" render={({ field }) => (
-                     <FormItem><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select Fuel Type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Diesel">Diesel</SelectItem><SelectItem value="CNG">CNG</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                     <FormItem><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select Fuel Type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Diesel">Diesel</SelectItem><SelectItem value="CNG">CNG</SelectItem><SelectItem value="Petrol">Petrol</SelectItem><SelectItem value="Electricity">Electricity</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="fuelConsumed" render={({ field }) => (
-                    <FormItem><FormLabel>Fuel Consumed</FormLabel><div className="relative"><TestTube2 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><FormControl><Input type="number" placeholder={`Amount in ${fuelType === 'CNG' ? 'kg' : 'liters'}`} className="pl-10" {...field} onChange={event => field.onChange(+event.target.value)} /></FormControl></div><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Fuel Consumed</FormLabel><div className="relative"><TestTube2 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><FormControl><Input type="number" placeholder={`Amount in ${fuelType === 'Electricity' ? 'kWh' : fuelType === 'CNG' ? 'kg' : 'liters'}`} className="pl-10" {...field} onChange={event => field.onChange(+event.target.value)} /></FormControl></div><FormMessage /></FormItem>
                   )} />
                 </div>
               )}
@@ -179,7 +179,7 @@ const SimpleTripCalculator = () => {
             </form>
           </Form>
 
-          {result && <ResultDisplay {...result} pincodeDb={pincodeDb} />}
+          {result && <ResultDisplay {...result} />}
         </CardContent>
       </Card>
     </div>

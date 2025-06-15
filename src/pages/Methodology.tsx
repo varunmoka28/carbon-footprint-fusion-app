@@ -119,6 +119,12 @@ const Methodology = () => {
                 <li><strong>Identify Inefficiencies:</strong> Higher t-km values can indicate issues like under-utilized vehicle capacity (empty or partially loaded trips).</li>
                 <li><strong>Drive Optimization:</strong> Setting targets to reduce kg CO₂e/t-km encourages better load planning and network optimization, leading to both cost savings and a lower carbon footprint.</li>
               </ul>
+              <Alert className="mt-4 border-blue-200 bg-blue-50 text-blue-800">
+                <AlertTitle className="font-semibold">How Load Weight is Used</AlertTitle>
+                <AlertDescription>
+                  In our model, "Load Weight" does not change the "Total Emissions" calculation, which is based on distance and vehicle type. Instead, load weight is essential for calculating freight efficiency (kg CO₂e/t-km). A heavier load on the same trip results in a lower (better) tonne-kilometer value, indicating a more efficient use of vehicle capacity.
+                </AlertDescription>
+              </Alert>
               <p>
                 In our calculator, this value is provided when you input the optional "Load Weight". A lower number signifies greater carbon efficiency for your freight operations.
               </p>
