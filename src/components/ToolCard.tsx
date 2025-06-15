@@ -3,12 +3,11 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { LucideIcon } from "lucide-react";
 
 interface ToolCardProps {
   title: string;
   description: string;
-  icon: LucideIcon;
+  icon: React.ElementType;
   onClick: () => void;
   isComingSoon?: boolean;
 }
