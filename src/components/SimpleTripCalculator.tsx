@@ -15,19 +15,19 @@ import { VEHICLE_CATEGORIES, FUEL_EMISSION_FACTORS, VehicleId } from '@/lib/cons
 import { MapPin, Route, Leaf, Fuel, Weight, Repeat, TestTube2, Waypoints } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
-import { usePincodeData, LocationInfo } from '@/hooks/usePincodeData';
+import { usePincodeData } from '@/hooks/usePincodeData';
 import { calculateDistance } from '@/lib/distance';
-import { resolveLocation } from '@/lib/locationUtils'; // New import
 import ResultDisplay, { Result } from './ResultDisplay';
-import { LocationInput } from './LocationInput';
 
 const vehicleIds = Object.keys(VEHICLE_CATEGORIES) as [VehicleId, ...VehicleId[]];
+
+const PincodeRegex = /^\d{6}$/;
 
 const formSchema = z.discriminatedUnion("calculationMode", [
   z.object({
     calculationMode: z.literal("distance"),
-    origin: z.string().min(1, { message: "Please select an origin." }),
-    destination: z.string().min(1, { message: "Please select a destination." }),
+    origin: z.string().regex(PincodeRegex, { message: "Must be a 6-digit pincode." }),
+    destination: z.string().regex(PincodeRegex, { message: "Must be a 6-digit pincode." }),
     vehicleType: z.enum(vehicleIds, { required_error: "Please select a vehicle type." }),
     loadWeight: z.coerce.number().positive({ message: "Weight must be positive." }).optional(),
     isRoundTrip: z.boolean().default(false),
@@ -53,7 +53,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 const SimpleTripCalculator = () => {
   const [result, setResult] = useState<Result | null>(null);
-  const { locationList, isLoading: isLocationDataLoading } = usePincodeData();
+  const { locationMap, isLoading: isLocationDataLoading } = usePincodeData();
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -73,17 +73,17 @@ const SimpleTripCalculator = () => {
   const onSubmit = (values: FormValues) => {
     setResult(null);
     if (values.calculationMode === 'distance') {
-      const resolvedOrigin = resolveLocation(values.origin, locationList);
+      const resolvedOrigin = locationMap.get(values.origin);
       if (!resolvedOrigin) {
-        toast.error("Invalid Origin", { description: "Please select a valid origin from the dropdown list, or be more specific." });
-        form.setError("origin", { message: "Could not find a unique location for this origin." });
+        toast.error("Invalid Origin Pincode", { description: "This pincode could not be found in our database." });
+        form.setError("origin", { message: "Invalid pincode." });
         return;
       }
 
-      const resolvedDestination = resolveLocation(values.destination, locationList);
+      const resolvedDestination = locationMap.get(values.destination);
       if (!resolvedDestination) {
-        toast.error("Invalid Destination", { description: "Please select a valid destination from the dropdown list, or be more specific." });
-        form.setError("destination", { message: "Could not find a unique location for this destination." });
+        toast.error("Invalid Destination Pincode", { description: "This pincode could not be found in our database." });
+        form.setError("destination", { message: "Invalid pincode." });
         return;
       }
       
@@ -104,8 +104,8 @@ const SimpleTripCalculator = () => {
         emissions,
         emissionsPerTonneKm,
         calculationMode: 'distance',
-        origin: `${resolvedOrigin.name}, ${resolvedOrigin.pincode}`,
-        destination: `${resolvedDestination.name}, ${resolvedDestination.pincode}`,
+        origin: `${resolvedOrigin.district}, ${resolvedOrigin.state} (${resolvedOrigin.pincode})`,
+        destination: `${resolvedDestination.district}, ${resolvedDestination.state} (${resolvedDestination.pincode})`,
         emissionFactorDetails: {
           factor: vehicle.emissionFactor,
           source: vehicle.source,
@@ -181,39 +181,37 @@ const SimpleTripCalculator = () => {
               {calculationMode === 'distance' && (
                 <div className="space-y-4 animate-fade-in">
                   <FormField control={form.control} name="origin" render={({ field }) => (
-                    <FormItem><FormLabel>Origin</FormLabel>
+                    <FormItem>
+                      <FormLabel>Origin Pincode</FormLabel>
                       <FormControl>
-                        <LocationInput
-                          locations={locationList}
-                          value={field.value}
-                          onChange={field.onChange}
-                          onLocationSelect={(location) => {
-                            field.onChange(location.searchableString);
-                            form.clearErrors("origin");
-                          }}
-                          placeholder="Type a city or pincode..."
-                          Icon={MapPin}
-                          disabled={isLocationDataLoading}
-                        />
+                         <div className="relative">
+                           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                           <Input
+                              {...field}
+                              placeholder="Enter 6-digit pincode..."
+                              className="pl-10"
+                              maxLength={6}
+                              disabled={isLocationDataLoading}
+                           />
+                         </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="destination" render={({ field }) => (
-                    <FormItem><FormLabel>Destination</FormLabel>
+                    <FormItem>
+                      <FormLabel>Destination Pincode</FormLabel>
                       <FormControl>
-                        <LocationInput
-                          locations={locationList}
-                          value={field.value}
-                          onChange={field.onChange}
-                          onLocationSelect={(location) => {
-                            field.onChange(location.searchableString);
-                            form.clearErrors("destination");
-                          }}
-                          placeholder="Type a city or pincode..."
-                          Icon={Route}
-                          disabled={isLocationDataLoading}
-                        />
+                        <div className="relative">
+                          <Route className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                          <Input
+                            {...field}
+                            placeholder="Enter 6-digit pincode..."
+                            className="pl-10"
+                            maxLength={6}
+                            disabled={isLocationDataLoading}
+                          />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

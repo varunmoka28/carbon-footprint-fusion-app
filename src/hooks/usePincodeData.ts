@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 
@@ -9,12 +8,11 @@ export type LocationInfo = {
   state: string;
   x: number; // longitude
   y: number; // latitude
-  searchableString: string;
 };
 
 
 export const usePincodeData = () => {
-  const [locationList, setLocationList] = useState<LocationInfo[]>([]);
+  const [locationMap, setLocationMap] = useState<Map<string, LocationInfo>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -23,28 +21,25 @@ export const usePincodeData = () => {
       header: true,
       dynamicTyping: true,
       complete: (results) => {
-        const list: LocationInfo[] = [];
-        const seenKeys = new Set();
+        const map = new Map<string, LocationInfo>();
         // CSV Headers: pincode,taluk,district,state,x,y
         results.data.forEach((row: any) => {
           if (row.pincode && row.x != null && row.y != null && row.taluk && row.district && row.state) {
-            const key = `${row.pincode}-${row.taluk}`;
-            if (seenKeys.has(key)) return; // Avoid duplicates
-            seenKeys.add(key);
-            
             const pincodeStr = String(row.pincode);
-            list.push({
-              pincode: pincodeStr,
-              name: row.taluk,
-              district: row.district,
-              state: row.state,
-              x: row.x,
-              y: row.y,
-              searchableString: `${row.taluk}, ${row.district}, ${row.state} ${pincodeStr}`.toLowerCase()
-            });
+             // We only store the first location found for each pincode to keep it simple.
+            if (!map.has(pincodeStr)) {
+              map.set(pincodeStr, {
+                pincode: pincodeStr,
+                name: row.taluk,
+                district: row.district,
+                state: row.state,
+                x: row.x,
+                y: row.y,
+              });
+            }
           }
         });
-        setLocationList(list);
+        setLocationMap(map);
         setIsLoading(false);
       },
       error: (error) => {
@@ -54,5 +49,5 @@ export const usePincodeData = () => {
     });
   }, []);
 
-  return { locationList, isLoading };
+  return { locationMap, isLoading };
 };
