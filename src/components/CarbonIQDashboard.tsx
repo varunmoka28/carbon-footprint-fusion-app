@@ -161,6 +161,24 @@ const CarbonIQDashboard = () => {
 
   return (
     <div className="space-y-6 p-4 md:p-8">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">B2B Last Mile & First Mile Emissions Calculator</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-muted-foreground">
+            This tool is designed for analyzing carbon emissions from one-way, B2B supply chain transaction trips (last-mile or first-mile).
+          </p>
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertTitle>For Demonstration Purposes Only</AlertTitle>
+            <AlertDescription>
+              All trip and vehicle data used in this dashboard is mock data, intended to showcase the tool's capabilities.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <FileUpload fileType="trips" title="1. Upload Trips CSV" onFileUpload={handleFileUpload} fileName={files.trips?.name || null} />
         <FileUpload fileType="vehicles" title="2. Upload Vehicles CSV" onFileUpload={handleFileUpload} fileName={files.vehicles?.name || null} />
