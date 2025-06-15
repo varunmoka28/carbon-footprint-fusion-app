@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 // A comprehensive dictionary mapping location names to SVG coordinates.
@@ -28,6 +27,7 @@ const locations: Record<string, { x: number; y: number }> = {
   'JAIPUR': { x: 360, y: 330 },
   'JODHPUR': { x: 300, y: 360 },
   'UDAIPUR': { x: 320, y: 410 },
+  'PRATAPGARH': { x: 340, y: 420 }, // Added
   'GUJARAT': { x: 220, y: 480 },
   'AHMEDABAD': { x: 260, y: 490 },
   'SURAT': { x: 270, y: 550 },
@@ -69,6 +69,7 @@ const locations: Record<string, { x: number; y: number }> = {
   'ANDHRA PRADESH': { x: 450, y: 750 },
   'VISAKHAPATNAM': { x: 520, y: 680 },
   'KARNATAKA': { x: 380, y: 780 },
+  'BIJAPUR': { x: 360, y: 710 }, // Added
   'BENGALURU': { x: 410, y: 810 },
   'BANGALORE': { x: 410, y: 810 },
   'MANGALORE': { x: 350, y: 810 },
@@ -99,13 +100,20 @@ interface IndiaMapProps {
 const IndiaMap = ({ origin = '', destination = '' }: IndiaMapProps) => {
   const originInfo = findCoords(origin);
   const destInfo = findCoords(destination);
+  const unmappedLocations: string[] = [];
+  if (origin && !originInfo) {
+    unmappedLocations.push(origin);
+  }
+  if (destination && !destInfo) {
+    unmappedLocations.push(destination);
+  }
 
   // A more detailed, high-quality SVG path for India's outline.
   const indiaPath = "M731.4,475.9c-0.1-0.1-0.2-0.1-0.3-0.2l-12.3-11.3c-1.4-1.3-3.3-2-5.2-2s-3.8,0.7-5.2,2l-11.4,10.5c-0.2,0.2-0.4,0.3-0.6,0.5l-2.6,2.4c-1.3,1.2-3.1,1.9-4.9,1.9s-3.6-0.7-4.9-1.9l-11.4-10.5c-1.4-1.3-3.3-2-5.2-2s-3.8,0.7-5.2,2l-12.3,11.3c-0.1,0.1-0.2,0.2-0.2,0.2l-16.7,15.4c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2l-16.7-15.4c-1.4-1.3-3.3-2-5.2-2s-3.8,0.7-5.2,2l-16.7,15.4c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2l-11.4-10.5c-1.3-1.2-3.1-1.9-4.9-1.9s-3.6,0.7-4.9,1.9l-2.6-2.4c-0.2-0.2-0.4-0.3-0.6-0.5l-11.4-10.5c-1.4-1.3-3.3-2-5.2-2s-3.8,0.7-5.2,2l-12.3,11.3c-0.1,0.1-0.2,0.1-0.3,0.2c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2l-12.3-11.3c-0.1-0.1-0.2-0.2-0.2-0.2l-11.4-10.5c-1.3-1.2-3.1-1.9-4.9-1.9s-3.6,0.7-4.9,1.9l-11.4,10.5c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2l-16.7-15.4c-1.4-1.3-3.3-2-5.2-2s-3.8,0.7-5.2,2l-16.7,15.4c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2,2L360,503.9l-26.6,24.5c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2l-11.4-10.5c-1.3-1.2-3.1-1.9-4.9-1.9s-3.6,0.7-4.9,1.9l-11.4,10.5c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2l-11.4-10.5c-1.3-1.2-3.1-1.9-4.9-1.9s-3.6,0.7-4.9,1.9l-12.3,11.3c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2L194,480.1c-1.4-1.3-3.3-2-5.2-2s-3.8,0.7-5.2,2l-21.7,20c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2l-16.7-15.4v-46.1c0-2-0.8-3.9-2.2-5.3l-21.9-22.6c-1.5-1.5-3.5-2.3-5.6-2.3H2.2c-1.2,0-2.2,1-2.2,2.2v29.3c0,1.2,1,2.2,2.2,2.2h93.1c1.7,0,3.3,0.7,4.5,1.9l26.4,27.2c1.2,1.3,1.9,3,1.9,4.8v41.3c0,2-0.8,3.9-2.2,5.3l-11.4,11.8c-1.5,1.5-3.5,2.3-5.6,2.3H2.2c-1.2,0-2.2,1-2.2,2.2v29.3c0,1.2,1,2.2,2.2,2.2h101.9c2,0,4-0.8,5.5-2.3l16.1-16.6c1.5-1.5,3.5-2.3,5.6-2.3h22.8c1.7,0,3.3,0.7,4.5,1.9l26.4,27.2L186.1,600c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2l-16.7-15.4c-1.4-1.3-3.3-2-5.2-2s-3.8,0.7-5.2,2l-21.7,20c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2l-11.4-10.5c-1.3-1.2-3.1-1.9-4.9-1.9s-3.6,0.7-4.9,1.9L22.9,640.8c-1.4,1.3-2.2,3.1-2.2,4.9v218c0,4.2,3.4,7.6,7.6,7.6h738.9c4.2,0,7.6-3.4,7.6-7.6V503.9c0-1.9-0.7-3.6-2-4.9L731.4,475.9z M450.5,83.8L426,134.3c-2,4.1-6,6.9-10.6,6.9h-42.9c-4.5,0-8.6-2.8-10.6-6.9L337.5,83.8c-2-4.1-6-6.9-10.6-6.9h-42.9c-4.5,0-8.6-2.8-10.6-6.9L249,25.4c-2-4.1-6-6.9-10.6-6.9h-42.9c-4.5,0-8.6-2.8-10.6-6.9L160.4,0H789.7L461.1,76.9c-4.5,0-8.6,2.8-10.6,6.9z";
 
   return (
-    <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-lg p-2">
-      <svg viewBox="100 0 700 900" className="w-full h-full">
+    <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 rounded-lg p-2">
+      <svg viewBox="100 0 700 900" className="w-full h-full flex-1">
         <style>
           {`
             .route-line {
@@ -173,10 +181,9 @@ const IndiaMap = ({ origin = '', destination = '' }: IndiaMapProps) => {
           </g>
         )}
 
-        {!(originInfo && destInfo) && (
+        {!originInfo && !destInfo && origin && destination && (
             <text x="50%" y="50%" textAnchor="middle" fill="#6B7280" fontSize="16px" fontFamily="Poppins, sans-serif">
-                { !originInfo && !destInfo ? "Route data unavailable." :
-                  !originInfo ? "Origin not mapped." : "Destination not mapped." }
+                Route data unavailable.
             </text>
         )}
         
@@ -194,6 +201,16 @@ const IndiaMap = ({ origin = '', destination = '' }: IndiaMapProps) => {
           </marker>
         </defs>
       </svg>
+      {unmappedLocations.length > 0 && (
+        <div className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-2 mt-2 w-full text-left">
+          <p className="font-semibold">Note:</p>
+          <ul className="list-disc list-inside pl-2">
+            {unmappedLocations.map((loc, index) => (
+              <li key={index}>The location "{loc}" could not be mapped.</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };
