@@ -1,64 +1,17 @@
+
 import React from 'react';
-
-// A comprehensive dictionary mapping 6-digit pincodes to SVG coordinates and names.
-const locations: Record<string, { x: number; y: number; name: string }> = {
-  // North
-  '190001': { x: 370, y: 70, name: 'Srinagar' },
-  '171001': { x: 405, y: 145, name: 'Shimla' },
-  '160017': { x: 390, y: 185, name: 'Chandigarh' },
-  '143001': { x: 350, y: 160, name: 'Amritsar' },
-  '248001': { x: 430, y: 200, name: 'Dehradun' },
-  '122001': { x: 395, y: 265, name: 'Gurugram' },
-  '110001': { x: 400, y: 260, name: 'Delhi' },
-  '226001': { x: 470, y: 340, name: 'Lucknow' },
-  '282001': { x: 420, y: 320, name: 'Agra' },
-  '201301': { x: 410, y: 270, name: 'Noida' },
-
-  // West
-  '302001': { x: 360, y: 330, name: 'Jaipur' },
-  '342001': { x: 300, y: 360, name: 'Jodhpur' },
-  '313001': { x: 320, y: 410, name: 'Udaipur' },
-  '312605': { x: 340, y: 420, name: 'Pratapgarh' },
-  '380001': { x: 260, y: 490, name: 'Ahmedabad' },
-  '395003': { x: 270, y: 550, name: 'Surat' },
-  '400001': { x: 290, y: 630, name: 'Mumbai' },
-  '411001': { x: 320, y: 650, name: 'Pune' },
-  '440001': { x: 430, y: 560, name: 'Nagpur' },
-  '403001': { x: 310, y: 730, name: 'Goa' },
-
-  // East
-  '800001': { x: 570, y: 360, name: 'Patna' },
-  '834001': { x: 560, y: 450, name: 'Ranchi' },
-  '751001': { x: 570, y: 560, name: 'Bhubaneswar' },
-  '700001': { x: 650, y: 480, name: 'Kolkata' },
-  '737101': { x: 650, y: 300, name: 'Sikkim' },
-  '781001': { x: 700, y: 340, name: 'Guwahati' },
-
-  // Central
-  '462001': { x: 410, y: 480, name: 'Bhopal' },
-  '452001': { x: 360, y: 500, name: 'Indore' },
-  '492001': { x: 500, y: 540, name: 'Raipur' },
-
-  // South
-  '500001': { x: 420, y: 690, name: 'Hyderabad' },
-  '530001': { x: 520, y: 680, name: 'Visakhapatnam' },
-  '586101': { x: 360, y: 710, name: 'Bijapur' },
-  '560001': { x: 410, y: 810, name: 'Bengaluru' },
-  '575001': { x: 350, y: 810, name: 'Mangalore' },
-  '600001': { x: 460, y: 820, name: 'Chennai' },
-  '641001': { x: 400, y: 870, name: 'Coimbatore' },
-  '625001': { x: 420, y: 910, name: 'Madurai' },
-  '682001': { x: 380, y: 910, name: 'Kochi' },
-  '695001': { x: 390, y: 950, name: 'Thiruvananthapuram' },
-};
 
 /**
  * Finds coordinates by extracting a 6-digit pincode from a location string.
  * @param place The string containing location information and a pincode.
+ * @param locations The pincode database (a dictionary).
  * @returns An object with pincode, name, and coordinates, or null if not found.
  */
-const findCoords = (place: string): { key: string; name: string; coords: { x: number; y: number } } | null => {
-  if (!place) return null;
+const findCoords = (
+  place: string,
+  locations: Record<string, { name: string; x: number; y: number }> | null
+): { key: string; name: string; coords: { x: number; y: number } } | null => {
+  if (!place || !locations) return null;
   const pincodeMatch = place.match(/\b(\d{6})\b/);
   if (pincodeMatch) {
     const pincode = pincodeMatch[1];
@@ -77,11 +30,26 @@ const findCoords = (place: string): { key: string; name: string; coords: { x: nu
 interface IndiaMapProps {
   origin?: string;
   destination?: string;
+  pincodeDb: Record<string, { name: string; x: number; y: number }> | null;
 }
 
-const IndiaMap = ({ origin = '', destination = '' }: IndiaMapProps) => {
-  const originInfo = findCoords(origin);
-  const destInfo = findCoords(destination);
+const IndiaMap = ({ origin = '', destination = '', pincodeDb }: IndiaMapProps) => {
+  if (!pincodeDb) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-lg p-2">
+        <div className="text-center text-muted-foreground flex flex-col items-center">
+          <svg className="animate-spin h-5 w-5 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Loading map data...
+        </div>
+      </div>
+    );
+  }
+
+  const originInfo = findCoords(origin, pincodeDb);
+  const destInfo = findCoords(destination, pincodeDb);
 
   const unmappedPincodes: string[] = [];
   const originPincode = origin.match(/\b(\d{6})\b/)?.[1];

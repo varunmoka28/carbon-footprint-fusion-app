@@ -1,4 +1,6 @@
-import React, { useState, useMemo } from 'react';
+
+import React, { useState, useMemo, useEffect } from 'react';
+import Papa from 'papaparse';
 import FileUpload from './FileUpload';
 import KPICard from './KPICard';
 import EmissionsChart from './EmissionsChart';
@@ -15,6 +17,52 @@ const CarbonIQDashboard = () => {
   const [files, setFiles] = useState<{ trips: File | null; vehicles: File | null }>({ trips: null, vehicles: null });
   const [selectedTrip, setSelectedTrip] = useState<ReportRow | null>(null);
   const { report, isLoading, error, assumptionNotes, generateReport, reset } = useReportGenerator();
+  const [pincodeDb, setPincodeDb] = useState<Record<string, { name: string; x: number; y: number }> | null>(null);
+  const [pincodeError, setPincodeError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPincodeData = async () => {
+      try {
+        const response = await fetch('https://raw.githubusercontent.com/varunmoka28/carbon-footprint-fusion-app/main/public/pincode.csv');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch pincode data. Status: ${response.status}`);
+        }
+        const csvText = await response.text();
+        
+        Papa.parse(csvText, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => {
+            if (results.errors.length) {
+              console.error('Parsing errors:', results.errors);
+              setPincodeError('Failed to parse pincode data.');
+              return;
+            }
+            const pincodeMap = (results.data as any[]).reduce((acc: Record<string, { name: string; x: number; y: number }>, row: any) => {
+              if (row.pincode && row.x && row.y && row.name) {
+                acc[row.pincode] = {
+                  name: row.name,
+                  x: parseFloat(row.x),
+                  y: parseFloat(row.y),
+                };
+              }
+              return acc;
+            }, {});
+            setPincodeDb(pincodeMap);
+          },
+          error: (error: any) => {
+            console.error('Error parsing pincode CSV:', error);
+            setPincodeError('Failed to parse pincode data.');
+          },
+        });
+      } catch (err: any) {
+        console.error("Failed to fetch pincode data:", err);
+        setPincodeError(err.message || 'An unknown error occurred while fetching map data.');
+      }
+    };
+
+    fetchPincodeData();
+  }, []);
 
   const handleFileUpload = (file: File, type: 'trips' | 'vehicles') => {
     setFiles(prev => ({ ...prev, [type]: file }));
@@ -74,6 +122,13 @@ const CarbonIQDashboard = () => {
           </Button>
         </div>
       </div>
+       {pincodeError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Map Data Error</AlertTitle>
+          <AlertDescription>{pincodeError}</AlertDescription>
+        </Alert>
+      )}
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -114,7 +169,7 @@ const CarbonIQDashboard = () => {
       <div>
         <TripDataTable data={report} onRowClick={handleRowClick} />
       </div>
-      <TripDetailModal tripData={selectedTrip} onClose={handleCloseModal} />
+      <TripDetailModal tripData={selectedTrip} onClose={handleCloseModal} pincodeDb={pincodeDb} />
     </div>
   );
 };

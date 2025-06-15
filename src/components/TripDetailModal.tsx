@@ -15,9 +15,10 @@ import { X } from 'lucide-react';
 interface TripDetailModalProps {
   tripData: ReportRow | null;
   onClose: () => void;
+  pincodeDb: Record<string, { name: string; x: number; y: number }> | null;
 }
 
-const TripDetailModal = ({ tripData, onClose }: TripDetailModalProps) => {
+const TripDetailModal = ({ tripData, onClose, pincodeDb }: TripDetailModalProps) => {
   if (!tripData) return null;
 
   const details = [
@@ -67,6 +68,7 @@ const TripDetailModal = ({ tripData, onClose }: TripDetailModalProps) => {
                 <IndiaMap
                     origin={tripData['Source']}
                     destination={tripData['Destination']}
+                    pincodeDb={pincodeDb}
                 />
             </div>
           </div>
