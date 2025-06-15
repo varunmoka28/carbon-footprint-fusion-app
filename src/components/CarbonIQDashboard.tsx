@@ -24,15 +24,17 @@ const CarbonIQDashboard = () => {
 
   const kpiData = useMemo(() => {
     if (report.length === 0) return { totalEmissions: 0, totalDistance: 0, totalTrips: 0 };
-    const totalEmissions = report.reduce((sum, trip) => sum + trip.emissions_kg_co2e, 0);
-    const totalDistance = report.reduce((sum, trip) => sum + trip.distance_km, 0);
+    const totalEmissions = report.reduce((sum, trip) => sum + trip['Calculated Carbon Emissions (kg CO₂e)'], 0);
+    const totalDistance = report.reduce((sum, trip) => sum + trip['Running Distance (km)'], 0);
     return { totalEmissions, totalDistance, totalTrips: report.length };
   }, [report]);
 
   const chartData = useMemo(() => {
     if (report.length === 0) return [];
     const emissionsByClass = report.reduce((acc, trip) => {
-      acc[trip.vehicle_class] = (acc[trip.vehicle_class] || 0) + trip.emissions_kg_co2e;
+      const vehicleClass = trip['Vehicle Category'];
+      const emissions = trip['Calculated Carbon Emissions (kg CO₂e)'];
+      acc[vehicleClass] = (acc[vehicleClass] || 0) + emissions;
       return acc;
     }, {} as Record<string, number>);
     return Object.entries(emissionsByClass).map(([name, emissions]) => ({ name, emissions: parseFloat(emissions.toFixed(2)) }));
