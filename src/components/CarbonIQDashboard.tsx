@@ -39,12 +39,17 @@ const CarbonIQDashboard = () => {
               return;
             }
             const pincodeMap = (results.data as any[]).reduce((acc: Record<string, { name: string; x: number; y: number }>, row: any) => {
-              if (row.pincode && row.x && row.y && row.name) {
-                acc[row.pincode] = {
-                  name: row.name,
-                  x: parseFloat(row.x),
-                  y: parseFloat(row.y),
-                };
+              // Fix: Use correct column names from the CSV file (Pincode, OfficeName, Longitude, Latitude)
+              if (row.Pincode && row.Longitude && row.Latitude && row.OfficeName) {
+                const lon = parseFloat(row.Longitude);
+                const lat = parseFloat(row.Latitude);
+                if (!isNaN(lon) && !isNaN(lat)) {
+                  acc[row.Pincode] = {
+                    name: row.OfficeName,
+                    x: lon, // Longitude
+                    y: lat, // Latitude
+                  };
+                }
               }
               return acc;
             }, {});
