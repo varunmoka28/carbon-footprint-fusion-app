@@ -36,8 +36,9 @@ export const useReportGenerator = () => {
         throw new Error("The trips CSV file appears to be empty or is not a valid CSV.");
       }
 
+      // --- Vehicle Data Mapping ---
       const vehicleMap = new Map();
-      const vehicleIdKeys = ['vehiclenumber', 'vehicle no', 'reg no', 'vehicleid', 'registration', 'current vehicle no'];
+      const vehicleIdKeys = ['vehiclenumber', 'vehicle no', 'reg no', 'vehicleid', 'registration', 'current vehicle no', 'currentvehicleno'];
       const vehicleClassKeys = ['class', 'vehicle_class', 'type', 'vehicle_type'];
       
       const vehicleIdKey = findKey(vehiclesData[0], vehicleIdKeys);
@@ -54,39 +55,86 @@ export const useReportGenerator = () => {
         vehiclesData.forEach((v: any) => vehicleMap.set(String(v[vehicleIdKey]), v[vehicleClassKey]));
       }
       
-      const tripVehicleIdKeys = ['vehiclenumber', 'vehicle no', 'reg no', 'vehicleid', 'registration', 'current vehicle no'];
-      const distanceKeys = ['distance', 'distance_km', 'km'];
-      const tripIdKeys = ['trip_id', 'tripid'];
+      // --- Trip Data Header Mapping ---
+      const tripVehicleIdKeys = ['vehiclenumber', 'vehicleno', 'regno', 'currentvehicleno'];
+      const distanceKeys = ['runningdistance', 'totaldistance', 'distance', 'distance_km'];
+      const sourceKeys = ['source'];
+      const destinationKeys = ['destination'];
+      const tripStartKeys = ['tripstartedat', 'trip started at'];
 
-      const tripVehicleIdKey = findKey(tripsData[0], tripVehicleIdKeys);
-      const distanceKey = findKey(tripsData[0], distanceKeys);
-      const tripIdKey = findKey(tripsData[0], tripIdKeys);
+      const tripsSampleRow = tripsData[0] || {};
+      const tripVehicleIdKey = findKey(tripsSampleRow, tripVehicleIdKeys);
+      const distanceKey = findKey(tripsSampleRow, distanceKeys);
+      const sourceKey = findKey(tripsSampleRow, sourceKeys);
+      const destinationKey = findKey(tripsSampleRow, destinationKeys);
+      const tripStartKey = findKey(tripsSampleRow, tripStartKeys);
+      
+      const availableColumns = Object.keys(tripsSampleRow).join(', ');
+      if (!tripVehicleIdKey) throw new Error(`Trips CSV Error: Could not find a vehicle identifier column. Available columns: [${availableColumns}]. Expected: ${tripVehicleIdKeys.join(', ')}.`);
+      if (!distanceKey) throw new Error(`Trips CSV Error: Could not find a distance column. Available columns: [${availableColumns}]. Expected: ${distanceKeys.join(', ')}.`);
+      if (!sourceKey) throw new Error(`Trips CSV Error: Could not find a source column. Available columns: [${availableColumns}]. Expected: ${sourceKeys.join(', ')}.`);
+      if (!destinationKey) throw new Error(`Trips CSV Error: Could not find a destination column. Available columns: [${availableColumns}]. Expected: ${destinationKeys.join(', ')}.`);
+      if (!tripStartKey) throw new Error(`Trips CSV Error: Could not find a trip start time column. Available columns: [${availableColumns}]. Expected: ${tripStartKeys.join(', ')}.`);
+      
 
-      if (!tripVehicleIdKey) {
-        const availableColumns = Object.keys(tripsData[0] || {}).join(', ');
-        throw new Error(`Trips CSV Error: Could not find a vehicle identifier column. Found columns: [${availableColumns}]. Expected a column header like 'Vehicle Number', 'Reg No', etc.`);
-      }
-      if (!distanceKey) {
-        const availableColumns = Object.keys(tripsData[0] || {}).join(', ');
-        throw new Error(`Trips CSV Error: Missing distance column. Found columns: [${availableColumns}]. Expected a column like: ${distanceKeys.join(', ')}.`);
-      }
-      if (!tripIdKey) {
-        const availableColumns = Object.keys(tripsData[0] || {}).join(', ');
-        throw new Error(`Trips CSV Error: Missing trip identifier. Found columns: [${availableColumns}]. Expected a column like: ${tripIdKeys.join(', ')}.`);
+      // --- Stage 1: Consolidation ---
+      const consolidatedTripsMap = new Map();
+      let invalidDateRows = 0;
+
+      for (const rawTrip of tripsData) {
+        const vehicleId = String(rawTrip[tripVehicleIdKey]);
+        const source = String(rawTrip[sourceKey]);
+        const destination = String(rawTrip[destinationKey]);
+        const tripStartStr = rawTrip[tripStartKey];
+        const distance = parseFloat(rawTrip[distanceKey]);
+
+        if (!vehicleId || !source || !destination || !tripStartStr || isNaN(distance)) {
+          continue; // Skip rows with incomplete essential data
+        }
+
+        let tripDate;
+        try {
+          const dateObj = new Date(tripStartStr);
+          if (isNaN(dateObj.getTime())) throw new Error('Invalid date');
+          tripDate = dateObj.toISOString().split('T')[0];
+        } catch (e) {
+          invalidDateRows++;
+          continue;
+        }
+
+        const compositeKey = `${vehicleId}-${source}-${destination}-${tripDate}`;
+
+        const existingTrip = consolidatedTripsMap.get(compositeKey);
+        if (existingTrip) {
+          if (distance > existingTrip.distance_km) {
+            existingTrip.distance_km = distance;
+          }
+        } else {
+          consolidatedTripsMap.set(compositeKey, {
+            trip_id: compositeKey,
+            vehicle_id: vehicleId,
+            distance_km: distance,
+          });
+        }
       }
 
-      const processedData: ProcessedTrip[] = tripsData.map((trip: any) => {
-        const vehicle_id = String(trip[tripVehicleIdKey]);
-        const distance_km = parseFloat(trip[distanceKey]);
-        const vehicle_class_raw = vehicleClassKey ? (vehicleMap.get(vehicle_id) || 'UNKNOWN') : 'HGV';
+      if (invalidDateRows > 0) {
+        setAssumptionNotes(prev => [...prev, `${invalidDateRows} rows were skipped from the trips file due to an unreadable date format in the '${tripStartKey}' column.`]);
+      }
+
+      const consolidatedTrips = Array.from(consolidatedTripsMap.values());
+
+      // --- Stage 2: Calculation ---
+      const processedData: ProcessedTrip[] = consolidatedTrips.map((trip) => {
+        const vehicle_class_raw = vehicleClassKey ? (vehicleMap.get(trip.vehicle_id) || 'UNKNOWN') : 'HGV';
         const vehicle_class = (Object.keys(EMISSION_FACTORS).includes(vehicle_class_raw.toUpperCase()) ? vehicle_class_raw.toUpperCase() : 'UNKNOWN') as VehicleType;
 
         return {
-          trip_id: String(trip[tripIdKey]),
-          vehicle_id,
-          distance_km,
+          trip_id: trip.trip_id,
+          vehicle_id: trip.vehicle_id,
+          distance_km: trip.distance_km,
           vehicle_class,
-          emissions_kg_co2e: distance_km * EMISSION_FACTORS[vehicle_class],
+          emissions_kg_co2e: trip.distance_km * EMISSION_FACTORS[vehicle_class],
         };
       }).filter((t: ProcessedTrip) => !isNaN(t.distance_km) && !isNaN(t.emissions_kg_co2e));
       
