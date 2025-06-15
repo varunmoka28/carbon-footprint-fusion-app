@@ -1,13 +1,12 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import Papa from 'papaparse';
 import FileUpload from './FileUpload';
 import KPICard from './KPICard';
-import EmissionsChart from './EmissionsChart';
+import VehiclesDashboard, { VehicleData } from './VehiclesDashboard';
 import TripDataTable from './TripDataTable';
 import TripDetailModal from './TripDetailModal';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, ArrowRight, BarChart, Info, Route, Tractor, PieChart as PieChartIcon } from 'lucide-react';
+import { AlertCircle, ArrowRight, BarChart, Info, Route, Tractor } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useReportGenerator, ReportRow } from '@/hooks/useReportGenerator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -102,17 +101,38 @@ const CarbonIQDashboard = () => {
     return { totalEmissions, totalDistance, totalTrips: report.length };
   }, [report]);
 
-  const chartData = useMemo(() => {
+  const vehicleDashboardData = useMemo((): VehicleData[] => {
     if (report.length === 0) return [];
-    const emissionsByClass = report.reduce((acc: Record<string, number>, trip: ReportRow) => {
-      const vehicleClass = trip['Vehicle Category'];
-      const emissions = trip['Calculated Carbon Emissions (kg CO₂e)'];
-      if (vehicleClass && !isNaN(emissions)) {
-        acc[vehicleClass] = (acc[vehicleClass] || 0) + emissions;
-      }
-      return acc;
-    }, {});
-    return Object.entries(emissionsByClass).map(([name, emissions]) => ({ name, emissions }));
+
+    const vehicleStats: Record<string, {
+        totalEmissions: number;
+        tripCount: number;
+        totalDistance: number;
+    }> = report.reduce((acc, trip) => {
+        const vehicleNo = trip['Vehicle No.'];
+        const emissions = trip['Calculated Carbon Emissions (kg CO₂e)'];
+        const distance = trip['Running Distance (km)'];
+
+        if (!acc[vehicleNo]) {
+            acc[vehicleNo] = { totalEmissions: 0, tripCount: 0, totalDistance: 0 };
+        }
+
+        if (!isNaN(emissions)) {
+            acc[vehicleNo].totalEmissions += emissions;
+        }
+        if (!isNaN(distance)) {
+            acc[vehicleNo].totalDistance += distance;
+        }
+        acc[vehicleNo].tripCount += 1;
+
+        return acc;
+    }, {} as Record<string, { totalEmissions: number; tripCount: number; totalDistance: number; }>);
+
+    return Object.entries(vehicleStats).map(([vehicleNo, stats]) => ({
+        vehicleNo,
+        ...stats,
+        efficiency: stats.totalDistance > 0 ? stats.totalEmissions / stats.totalDistance : 0,
+    })).sort((a, b) => b.totalEmissions - a.totalEmissions);
   }, [report]);
 
   return (
@@ -160,16 +180,7 @@ const CarbonIQDashboard = () => {
         <KPICard title="Total Trips" value={String(kpiData.totalTrips)} unit="Trips Analyzed" icon={Tractor} />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <EmissionsChart data={chartData} />
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base font-semibold">Emissions Breakdown</CardTitle>
-            <PieChartIcon className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="h-[350px] w-full flex items-center justify-center">
-             <p className="text-muted-foreground">Pie chart coming soon.</p>
-          </CardContent>
-        </Card>
+        <VehiclesDashboard data={vehicleDashboardData} />
       </div>
       <div>
         <TripDataTable data={report} onRowClick={handleRowClick} />
