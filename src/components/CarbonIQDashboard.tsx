@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import Papa from 'papaparse';
 import FileUpload from './FileUpload';
@@ -71,7 +70,8 @@ const CarbonIQDashboard = () => {
       }
 
       const vehicleMap = new Map();
-      const vehicleIdKeys = ['vehiclenumber', 'vehicle no', 'reg no', 'vehicleid', 'registration'];
+      // Added 'current vehicle no' to the list of recognized keys
+      const vehicleIdKeys = ['vehiclenumber', 'vehicle no', 'reg no', 'vehicleid', 'registration', 'current vehicle no'];
       const vehicleClassKeys = ['class', 'vehicle_class', 'type', 'vehicle_type'];
       
       const vehicleIdKey = findKey(vehiclesData[0], vehicleIdKeys);
@@ -88,7 +88,8 @@ const CarbonIQDashboard = () => {
         vehiclesData.forEach((v: any) => vehicleMap.set(String(v[vehicleIdKey]), v[vehicleClassKey]));
       }
       
-      const tripVehicleIdKeys = ['vehiclenumber', 'vehicle no', 'reg no', 'vehicleid', 'registration'];
+      // Added 'current vehicle no' here as well for consistency
+      const tripVehicleIdKeys = ['vehiclenumber', 'vehicle no', 'reg no', 'vehicleid', 'registration', 'current vehicle no'];
       const distanceKeys = ['distance', 'distance_km', 'km'];
       const tripIdKeys = ['trip_id', 'tripid'];
 
