@@ -23,7 +23,7 @@ const CarbonIQDashboard = () => {
   useEffect(() => {
     const fetchPincodeData = async () => {
       try {
-        const response = await fetch('https://raw.githubusercontent.com/varunmoka28/carbon-footprint-fusion-app/main/public/pincode.csv');
+        const response = await fetch('https://raw.githubusercontent.com/varunmoka28/carbon-footprint-fusion-app/refs/heads/main/public/pincode.csv?token=GHSAT0AAAAAADFWH5ULKORJ4O5QRXO2K6I22CO5QTA');
         if (!response.ok) {
           throw new Error(`Failed to fetch pincode data. Status: ${response.status}`);
         }
