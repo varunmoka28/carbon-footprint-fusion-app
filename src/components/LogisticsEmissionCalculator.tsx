@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,8 +12,8 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { VEHICLE_CATEGORIES, FUEL_EMISSION_FACTORS, VehicleId } from '@/lib/constants';
-import { MapPin, Route, Leaf, Fuel, Weight, Repeat, TestTube2, Waypoints } from 'lucide-react';
+import { VEHICLE_CATEGORIES, FUEL_EMISSION_FACTORS, VehicleId, FUEL_VEHICLE_CATEGORIES, FuelVehicleId } from '@/lib/constants';
+import { MapPin, Route, Leaf, Fuel, Weight, Repeat, TestTube2, Waypoints, Truck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 import { usePincodeData } from '@/hooks/usePincodeData';
@@ -20,8 +21,8 @@ import { calculateDistance } from '@/lib/distance';
 import ResultDisplay, { Result } from './ResultDisplay';
 
 const vehicleIds = Object.keys(VEHICLE_CATEGORIES) as [VehicleId, ...VehicleId[]];
-
-const PincodeRegex = /^\d{6}$/;
+const fuelVehicleIds = Object.keys(FUEL_VEHICLE_CATEGORIES) as [FuelVehicleId, ...FuelVehicleId[]];
+const fuelTypeIds = Object.keys(FUEL_EMISSION_FACTORS) as (keyof typeof FUEL_EMISSION_FACTORS)[];
 
 const formSchema = z.discriminatedUnion("calculationMode", [
   z.object({
@@ -34,8 +35,9 @@ const formSchema = z.discriminatedUnion("calculationMode", [
   }),
   z.object({
     calculationMode: z.literal("fuel"),
+    vehicleTypeFuel: z.enum(fuelVehicleIds, { required_error: "Please select a vehicle type." }),
     fuelConsumed: z.coerce.number().positive({ message: "Must be a positive number." }),
-    fuelType: z.enum(['Diesel', 'CNG', 'Petrol', 'Electricity'], { required_error: "Please select a fuel type." }),
+    fuelType: z.enum(fuelTypeIds, { required_error: "Please select a fuel type." }),
   }),
 ]).refine(data => {
   // If we are in distance mode and there's a load weight and a vehicle type, check if the weight is within the vehicle's max payload.
@@ -60,15 +62,23 @@ const LogisticsEmissionCalculator = () => {
       calculationMode: 'distance',
       origin: '',
       destination: '',
-      vehicleType: 'LCV', // A sensible default
+      vehicleType: 'LCV',
       isRoundTrip: false,
     },
   });
 
   const calculationMode = form.watch('calculationMode');
-  const fuelType = form.watch('fuelType' as 'fuelType');
+
+  // State for distance mode
   const selectedVehicleId = form.watch('vehicleType' as 'vehicleType'); // Watch for changes
   const selectedVehicle = selectedVehicleId ? VEHICLE_CATEGORIES[selectedVehicleId] : null;
+
+  // State for fuel mode
+  const selectedFuelVehicleId = form.watch('vehicleTypeFuel' as any);
+  const selectedFuelVehicle = selectedFuelVehicleId ? FUEL_VEHICLE_CATEGORIES[selectedFuelVehicleId as FuelVehicleId] : null;
+  const fuelType = form.watch('fuelType' as 'fuelType');
+  const selectedFuelData = fuelType ? FUEL_EMISSION_FACTORS[fuelType] : null;
+
 
   const onSubmit = (values: FormValues) => {
     setResult(null);
@@ -114,10 +124,19 @@ const LogisticsEmissionCalculator = () => {
         }
       });
     } else { // 'fuel' mode
+      const vehicle = FUEL_VEHICLE_CATEGORIES[values.vehicleTypeFuel!];
       const fuelData = FUEL_EMISSION_FACTORS[values.fuelType];
+      
       const emissions = values.fuelConsumed * fuelData.factor;
+      const distance = values.fuelConsumed * vehicle.averageMileage!;
+      const emissionIntensity = distance > 0 ? emissions / distance : 0;
+      
       setResult({
         emissions,
+        distance,
+        emissionIntensity,
+        fuelEfficiency: vehicle.averageMileage,
+        vehicleCategory: vehicle.name,
         calculationMode: 'fuel',
         emissionFactorDetails: {
           factor: fuelData.factor,
@@ -245,11 +264,85 @@ const LogisticsEmissionCalculator = () => {
 
               {calculationMode === 'fuel' && (
                 <div className="space-y-4 animate-fade-in">
-                  <FormField control={form.control} name="fuelType" render={({ field }) => (
-                     <FormItem><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select Fuel Type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Diesel">Diesel</SelectItem><SelectItem value="CNG">CNG</SelectItem><SelectItem value="Petrol">Petrol</SelectItem><SelectItem value="Electricity">Electricity</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                  <FormField
+                    control={form.control}
+                    name="vehicleTypeFuel"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Vehicle Type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <Truck className="mr-2 h-4 w-4 text-muted-foreground" />
+                              <SelectValue placeholder="Select Vehicle Type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Object.entries(FUEL_VEHICLE_CATEGORIES).map(([id, { name, averageMileage }]) => (
+                              <SelectItem key={id} value={id}>
+                                {name} ({averageMileage} km/L)
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {selectedFuelVehicle && (
+                          <div className="p-3 mt-2 bg-teal-50 border border-teal-200 text-teal-800 rounded-lg text-xs space-y-1 animate-fade-in">
+                            <p><strong>Weight Range:</strong> {selectedFuelVehicle.gvw}</p>
+                            <p><strong>Examples:</strong> {selectedFuelVehicle.examples}</p>
+                          </div>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField 
+                    control={form.control} 
+                    name="fuelType" 
+                    render={({ field }) => (
+                     <FormItem>
+                        <FormLabel>Fuel Type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                               <Fuel className="mr-2 h-4 w-4 text-muted-foreground" />
+                               <SelectValue placeholder="Select Fuel Type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {fuelTypeIds.map((id) => (
+                                <SelectItem key={id} value={id}>
+                                  {id}
+                                </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {selectedFuelData && (
+                          <div className="p-3 mt-2 bg-orange-50 border border-orange-200 text-orange-800 rounded-lg text-xs space-y-1 animate-fade-in">
+                            <p><strong>Emission Factor:</strong> {selectedFuelData.factor} kg CO₂e/{selectedFuelData.unit}</p>
+                            <p><strong>Source:</strong> <a href={selectedFuelData.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline">{selectedFuelData.source}</a></p>
+                          </div>
+                        )}
+                        <FormMessage />
+                     </FormItem>
                   )} />
                   <FormField control={form.control} name="fuelConsumed" render={({ field }) => (
-                    <FormItem><FormLabel>Fuel Consumed</FormLabel><div className="relative"><TestTube2 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><FormControl><Input type="number" placeholder={`Amount in ${fuelType ? FUEL_EMISSION_FACTORS[fuelType].unit : 'units'}`} className="pl-10" {...field} onChange={event => field.onChange(+event.target.value)} /></FormControl></div><FormMessage /></FormItem>
+                    <FormItem>
+                      <FormLabel>Fuel Consumed</FormLabel>
+                      <div className="relative">
+                        <TestTube2 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            placeholder={`Amount in ${fuelType ? FUEL_EMISSION_FACTORS[fuelType].unit : 'units'}`} 
+                            className="pl-10" 
+                            {...field} 
+                            onChange={event => field.onChange(event.target.value ? +event.target.value : '')}
+                            step="0.1" 
+                          />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
                   )} />
                 </div>
               )}

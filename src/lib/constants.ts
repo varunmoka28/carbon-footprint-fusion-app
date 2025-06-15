@@ -1,4 +1,3 @@
-
 export type Vehicle = {
   name: string;
   emissionFactor: number; // kg CO2e/km
@@ -6,11 +5,9 @@ export type Vehicle = {
   gvw: string; // Gross Vehicle Weight as a string for display
   source: string;
   sourceUrl: string;
-};
-
-const GLEC_SOURCE = {
-  source: "GLEC Framework, adapted for India",
-  sourceUrl: "https://www.smartfreightcentre.org/en/glec-framework/"
+  // New optional fields for fuel calculator
+  averageMileage?: number; // km/L
+  examples?: string;
 };
 
 // A detailed list of common Indian market vehicle categories
@@ -49,5 +46,52 @@ export const FUEL_EMISSION_FACTORS = {
   'Electricity': { factor: 0.75, unit: 'kWh', source: "CEA India Report", sourceUrl: "https://cea.nic.in/wp-content/uploads/2020/11/co2_database_version_15_formatted_for_website.pdf" },
 } as const;
 
+// New database for fuel-based calculations
+export const FUEL_VEHICLE_CATEGORIES = {
+  'DELIVERY_VAN': {
+    name: 'Delivery Van',
+    averageMileage: 10.8, // km/L
+    gvw: '1.5 - 3.5 tonnes',
+    examples: 'Mahindra Jeeto, Tata Super Ace',
+    emissionFactor: 0, maxPayload: 0, source: '', sourceUrl: '' // Dummy values, not used in fuel calc
+  },
+  'LGV': {
+    name: 'Light Goods Vehicle (LGV)',
+    averageMileage: 12.5, // km/L
+    gvw: '< 3.5 tonnes',
+    examples: 'Tata Ace, Mahindra Bolero Pickup',
+    emissionFactor: 0, maxPayload: 0, source: '', sourceUrl: ''
+  },
+  'MGV': {
+    name: 'Medium Goods Vehicle (MGV)',
+    averageMileage: 8.2, // km/L
+    gvw: '3.5 - 12 tonnes',
+    examples: 'Tata 1109, Ashok Leyland 1415',
+    emissionFactor: 0, maxPayload: 0, source: '', sourceUrl: ''
+  },
+  'HGV': {
+    name: 'Heavy Goods Vehicle (HGV)',
+    averageMileage: 5.8, // km/L
+    gvw: '> 12 tonnes',
+    examples: 'Tata 1618, Volvo FMX',
+    emissionFactor: 0, maxPayload: 0, source: '', sourceUrl: ''
+  },
+  'CITY_BUS': {
+    name: 'City Bus',
+    averageMileage: 4.2, // km/L
+    gvw: '10 - 18 tonnes',
+    examples: 'Tata Starbus, Ashok Leyland Lynx',
+    emissionFactor: 0, maxPayload: 0, source: '', sourceUrl: ''
+  },
+  'INTERCITY_BUS': {
+    name: 'Intercity Bus',
+    averageMileage: 5.5, // km/L
+    gvw: '12 - 20 tonnes',
+    examples: 'Volvo Multi-Axle, Scania Metrolink',
+    emissionFactor: 0, maxPayload: 0, source: '', sourceUrl: ''
+  },
+} as const;
+
+export type FuelVehicleId = keyof typeof FUEL_VEHICLE_CATEGORIES;
 
 export type FuelType = keyof typeof FUEL_EMISSION_FACTORS;
