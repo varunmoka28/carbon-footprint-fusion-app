@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useReportGenerator, ReportRow } from '@/hooks/useReportGenerator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { VehicleType } from '@/lib/constants';
+import VehicleTypeChart, { VehicleTypeData } from './VehicleTypeChart';
 
 const CarbonIQDashboard = () => {
   const [files, setFiles] = useState<{ trips: File | null; vehicles: File | null }>({ trips: null, vehicles: null });
@@ -135,6 +136,29 @@ const CarbonIQDashboard = () => {
     })).sort((a, b) => b.totalEmissions - a.totalEmissions);
   }, [report]);
 
+  const vehicleTypeEmissionsData = useMemo((): VehicleTypeData[] => {
+    if (report.length === 0) return [];
+
+    const emissionsByType = report.reduce((acc, trip) => {
+      const vehicleType = trip['Vehicle Category'] || 'UNKNOWN';
+      const emissions = trip['Calculated Carbon Emissions (kg CO₂e)'];
+      
+      if (!acc[vehicleType]) {
+        acc[vehicleType] = 0;
+      }
+      
+      if (!isNaN(emissions)) {
+        acc[vehicleType] += emissions;
+      }
+
+      return acc;
+    }, {} as Record<string, number>);
+
+    return Object.entries(emissionsByType)
+      .map(([type, emissions]) => ({ type, emissions }))
+      .sort((a, b) => b.emissions - a.emissions);
+  }, [report]);
+
   return (
     <div className="space-y-6 p-4 md:p-8">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -181,6 +205,7 @@ const CarbonIQDashboard = () => {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <VehiclesDashboard data={vehicleDashboardData} />
+        <VehicleTypeChart data={vehicleTypeEmissionsData} />
       </div>
       <div>
         <TripDataTable data={report} onRowClick={handleRowClick} />

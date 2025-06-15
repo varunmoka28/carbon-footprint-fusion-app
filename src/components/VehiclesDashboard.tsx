@@ -2,7 +2,9 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tractor } from 'lucide-react';
+import { Download, Tractor } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { exportToCsv } from '@/lib/csvUtils';
 
 export interface VehicleData {
   vehicleNo: string;
@@ -17,11 +19,35 @@ interface VehiclesDashboardProps {
 }
 
 const VehiclesDashboard = ({ data }: VehiclesDashboardProps) => {
+  const handleDownload = () => {
+    const headers = [
+      'Vehicle No.',
+      'Total Trips',
+      'Total Distance (km)',
+      'Total Emissions (kg CO₂e)',
+      'Efficiency (kg CO₂e/km)',
+    ];
+    const exportData = data.map(v => ({
+      'Vehicle No.': v.vehicleNo,
+      'Total Trips': v.tripCount,
+      'Total Distance (km)': v.totalDistance.toFixed(2),
+      'Total Emissions (kg CO₂e)': v.totalEmissions.toFixed(2),
+      'Efficiency (kg CO₂e/km)': v.efficiency.toFixed(3),
+    }));
+    exportToCsv(exportData, headers, 'vehicles-dashboard.csv');
+  };
+
   return (
-    <Card className="col-span-1 lg:col-span-2">
+    <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Vehicles Dashboard</CardTitle>
-        <Tractor className="h-5 w-5 text-muted-foreground" />
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleDownload} disabled={data.length === 0}>
+            <Download className="h-4 w-4 mr-2" />
+            CSV
+          </Button>
+          <Tractor className="h-5 w-5 text-muted-foreground" />
+        </div>
       </CardHeader>
       <CardContent className="h-[350px] w-full overflow-auto">
         {data.length > 0 ? (

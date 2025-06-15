@@ -17,7 +17,7 @@ const Index = () => {
           <div className="flex items-center gap-2">
             <Leaf className="h-8 w-8 text-eco-green" />
             <h1 className="text-xl md:text-2xl font-poppins font-bold text-slate-800">
-              Carbon<span className="text-eco-green">IQ</span>
+              Gocarbontracker <span className="text-eco-green">Tools</span>
             </h1>
           </div>
           <Tabs value={appMode} onValueChange={(value) => setAppMode(value as AppMode)} className="w-auto">
@@ -40,7 +40,7 @@ const Index = () => {
       </main>
 
       <footer className="text-center p-4 text-sm text-muted-foreground">
-        © {new Date().getFullYear()} CarbonIQ. All rights reserved.
+        © {new Date().getFullYear()} Gocarbontracker Tools. All rights reserved.
       </footer>
     </div>
   );
