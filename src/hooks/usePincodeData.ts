@@ -22,19 +22,19 @@ export const usePincodeData = () => {
       dynamicTyping: true,
       complete: (results) => {
         const map = new Map<string, LocationInfo>();
-        // CSV Headers: pincode,taluk,district,state,x,y
+        // CSV Headers: Pincode,OfficeName,District,StateName,Longitude,Latitude
         results.data.forEach((row: any) => {
-          if (row.pincode && row.x != null && row.y != null && row.taluk && row.district && row.state) {
-            const pincodeStr = String(row.pincode);
+          if (row.Pincode && row.Longitude != null && row.Latitude != null && row.OfficeName && row.District && row.StateName) {
+            const pincodeStr = String(row.Pincode);
              // We only store the first location found for each pincode to keep it simple.
             if (!map.has(pincodeStr)) {
               map.set(pincodeStr, {
                 pincode: pincodeStr,
-                name: row.taluk,
-                district: row.district,
-                state: row.state,
-                x: row.x,
-                y: row.y,
+                name: row.OfficeName,
+                district: row.District,
+                state: row.StateName,
+                x: row.Longitude,
+                y: row.Latitude,
               });
             }
           }
