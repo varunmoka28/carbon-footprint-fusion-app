@@ -4,7 +4,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ReportRow } from '@/hooks/useReportGenerator';
 
-const TripDataTable = ({ data }: { data: ReportRow[] }) => {
+interface TripDataTableProps {
+  data: ReportRow[];
+  onRowClick: (trip: ReportRow) => void;
+}
+
+const TripDataTable = ({ data, onRowClick }: TripDataTableProps) => {
   const headers: (keyof ReportRow)[] = [
     'Physical Trip ID', 'Assignment UID(s) Included', 'Consignment Note UID(s)', 'Vehicle No.',
     'Source', 'Destination', 'Running Distance (km)', 'Representative Trip Completed At',
@@ -34,7 +39,11 @@ const TripDataTable = ({ data }: { data: ReportRow[] }) => {
             </TableHeader>
             <TableBody>
               {data.length > 0 ? data.map((trip, index) => (
-                <TableRow key={trip['Physical Trip ID'] || index}>
+                <TableRow 
+                  key={trip['Physical Trip ID'] || index} 
+                  onClick={() => onRowClick(trip)}
+                  className="cursor-pointer hover:bg-muted/50"
+                >
                   {headers.map(header => (
                     <TableCell key={header} className={typeof trip[header] === 'number' ? 'text-right' : ''}>
                       {renderCell(trip, header)}

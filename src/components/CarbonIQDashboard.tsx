@@ -3,6 +3,7 @@ import FileUpload from './FileUpload';
 import KPICard from './KPICard';
 import EmissionsChart from './EmissionsChart';
 import TripDataTable from './TripDataTable';
+import TripDetailModal from './TripDetailModal';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, ArrowRight, BarChart, Info, Route, Tractor, PieChart as PieChartIcon } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -12,6 +13,7 @@ import { VehicleType } from '@/lib/constants';
 
 const CarbonIQDashboard = () => {
   const [files, setFiles] = useState<{ trips: File | null; vehicles: File | null }>({ trips: null, vehicles: null });
+  const [selectedTrip, setSelectedTrip] = useState<ReportRow | null>(null);
   const { report, isLoading, error, assumptionNotes, generateReport, reset } = useReportGenerator();
 
   const handleFileUpload = (file: File, type: 'trips' | 'vehicles') => {
@@ -21,6 +23,14 @@ const CarbonIQDashboard = () => {
   
   const handleGenerateReport = () => {
     generateReport({ tripsFile: files.trips, vehiclesFile: files.vehicles });
+  };
+
+  const handleRowClick = (trip: ReportRow) => {
+    setSelectedTrip(trip);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedTrip(null);
   };
 
   const kpiData = useMemo(() => {
@@ -102,8 +112,9 @@ const CarbonIQDashboard = () => {
         </Card>
       </div>
       <div>
-        <TripDataTable data={report} />
+        <TripDataTable data={report} onRowClick={handleRowClick} />
       </div>
+      <TripDetailModal tripData={selectedTrip} onClose={handleCloseModal} />
     </div>
   );
 };
