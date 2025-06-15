@@ -29,23 +29,23 @@ const formSchema = z.discriminatedUnion("calculationMode", [
     vehicleType: z.enum(vehicleIds, { required_error: "Please select a vehicle type." }),
     loadWeight: z.coerce.number().positive({ message: "Weight must be positive." }).optional(),
     isRoundTrip: z.boolean().default(false),
-  }).refine(data => {
-    // If there's a load weight and a vehicle type, check if the weight is within the vehicle's max payload.
-    if (data.loadWeight && data.vehicleType) {
-      return data.loadWeight <= VEHICLE_CATEGORIES[data.vehicleType].maxPayload;
-    }
-    // If no weight is entered, validation passes.
-    return true;
-  }, {
-    message: "Load weight exceeds the selected vehicle's maximum payload.",
-    path: ["loadWeight"], // Apply the error message to the loadWeight field
   }),
   z.object({
     calculationMode: z.literal("fuel"),
     fuelConsumed: z.coerce.number().positive({ message: "Must be a positive number." }),
     fuelType: z.enum(['Diesel', 'CNG', 'Petrol', 'Electricity'], { required_error: "Please select a fuel type." }),
   }),
-]);
+]).refine(data => {
+  // If we are in distance mode and there's a load weight and a vehicle type, check if the weight is within the vehicle's max payload.
+  if (data.calculationMode === 'distance' && data.loadWeight && data.vehicleType) {
+    return data.loadWeight <= VEHICLE_CATEGORIES[data.vehicleType].maxPayload;
+  }
+  // Otherwise, validation passes.
+  return true;
+}, {
+  message: "Load weight exceeds the selected vehicle's maximum payload.",
+  path: ["loadWeight"], // Apply the error message to the loadWeight field
+});
 
 type FormValues = z.infer<typeof formSchema>;
 

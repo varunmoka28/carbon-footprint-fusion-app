@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { EMISSION_FACTORS, VehicleType } from '@/lib/constants';
+import { VEHICLE_CATEGORIES, VehicleId, VehicleType } from '@/lib/constants';
 import { parseCsv, findKey } from '@/lib/csvUtils';
 
 export interface ReportGeneratorInput {
@@ -16,7 +16,7 @@ export interface ReportRow {
   'Destination': string;
   'Running Distance (km)': number;
   'Representative Trip Completed At': string;
-  'Vehicle Category': VehicleType | 'UNKNOWN';
+  'Vehicle Category': VehicleId | 'UNKNOWN';
   'Emission Factor (kg CO₂e/km)': number;
   'Calculated Carbon Emissions (kg CO₂e)': number;
 }
@@ -183,18 +183,20 @@ export const useReportGenerator = () => {
       const consolidatedTrips = Array.from(consolidatedTripsMap.values());
 
       // --- Stage 2: Calculation (with fallback) ---
-      const getVehicleCategory = (rawClass: string | undefined): VehicleType => {
+      const getVehicleCategory = (rawClass: string | undefined): VehicleId | 'UNKNOWN' => {
         if (!rawClass) return 'UNKNOWN';
-        const lowerClass = String(rawClass).toLowerCase();
-
         const upperClass = String(rawClass).toUpperCase();
-        if (Object.keys(EMISSION_FACTORS).includes(upperClass)) {
-          return upperClass as VehicleType;
+
+        if (upperClass in VEHICLE_CATEGORIES) {
+          return upperClass as VehicleId;
         }
 
-        if (lowerClass.includes('heavy') || lowerClass.includes('hgv')) return 'HGV';
-        if (lowerClass.includes('medium') || lowerClass.includes('mgv')) return 'MGV';
-        if (lowerClass.includes('light') || lowerClass.includes('lgv')) return 'LGV';
+        const lowerClass = String(rawClass).toLowerCase();
+
+        // Heuristic mapping for common legacy terms
+        if (lowerClass.includes('heavy') || lowerClass.includes('hgv')) return 'HCV';
+        if (lowerClass.includes('medium') || lowerClass.includes('mgv')) return 'MCV';
+        if (lowerClass.includes('light') || lowerClass.includes('lgv')) return 'LCV';
 
         return 'UNKNOWN';
       };
@@ -202,7 +204,7 @@ export const useReportGenerator = () => {
       const unmappedVehicles = new Set<string>();
       const processedData: ReportRow[] = consolidatedTrips.map((trip, index) => {
         const vehicleId = trip.vehicle_no;
-        let vehicle_class: VehicleType;
+        let vehicle_class: VehicleId | 'UNKNOWN';
 
         if (vehicleMap.has(vehicleId)) {
           const rawClassFromFile = vehicleMap.get(vehicleId);
@@ -216,12 +218,12 @@ export const useReportGenerator = () => {
             throw new Error(`Error: Unrecognized vehicle class '${rawClassFromFile}' for vehicle ${vehicleId}.`);
           }
         } else {
-          // Vehicle not found in vehicles file, assume HGV
-          vehicle_class = 'HGV';
+          // Vehicle not found in vehicles file, assume HCV
+          vehicle_class = 'HCV';
           unmappedVehicles.add(vehicleId);
         }
         
-        const emission_factor = EMISSION_FACTORS[vehicle_class];
+        const emission_factor = VEHICLE_CATEGORIES[vehicle_class].emissionFactor;
 
         return {
           'Physical Trip ID': `TRIP-${index + 1}`,
@@ -241,7 +243,7 @@ export const useReportGenerator = () => {
       if (unmappedVehicles.size > 0) {
         const vehicleList = Array.from(unmappedVehicles).slice(0, 5).join(', ');
         const moreCount = unmappedVehicles.size > 5 ? ` and ${unmappedVehicles.size - 5} more` : '';
-        setAssumptionNotes(prev => [...prev, `Could not find vehicles like '${vehicleList}${moreCount}' in your vehicles file. They have been assumed to be 'HGV'.`]);
+        setAssumptionNotes(prev => [...prev, `Could not find vehicles like '${vehicleList}${moreCount}' in your vehicles file. They have been assumed to be 'HCV' (Heavy Commercial Vehicle).`]);
       }
 
       setReport(processedData);

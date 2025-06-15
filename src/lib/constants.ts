@@ -20,6 +20,8 @@ export const VEHICLE_CATEGORIES = {
 
 export type VehicleId = keyof typeof VEHICLE_CATEGORIES;
 
+export type VehicleType = VehicleId;
+
 // Emission factors for fuels
 export const FUEL_EMISSION_FACTORS = {
   'Diesel': 2.68,      // kg CO2e/liter
