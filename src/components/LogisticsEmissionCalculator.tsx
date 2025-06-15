@@ -51,7 +51,7 @@ const formSchema = z.discriminatedUnion("calculationMode", [
 
 type FormValues = z.infer<typeof formSchema>;
 
-const SimpleTripCalculator = () => {
+const LogisticsEmissionCalculator = () => {
   const [result, setResult] = useState<Result | null>(null);
   const { locationMap, isLoading: isLocationDataLoading } = usePincodeData();
   const form = useForm<FormValues>({
@@ -267,4 +267,4 @@ const SimpleTripCalculator = () => {
   );
 };
 
-export default SimpleTripCalculator;
+export default LogisticsEmissionCalculator;

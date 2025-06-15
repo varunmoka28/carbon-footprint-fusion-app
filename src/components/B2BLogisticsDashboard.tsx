@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { VehicleType } from '@/lib/constants';
 import VehicleTypeChart, { VehicleTypeData } from './VehicleTypeChart';
 
-const CarbonIQDashboard = () => {
+const B2BLogisticsDashboard = () => {
   const [files, setFiles] = useState<{ trips: File | null; vehicles: File | null }>({ trips: null, vehicles: null });
   const [selectedTrip, setSelectedTrip] = useState<ReportRow | null>(null);
   const { report, isLoading, error, assumptionNotes, generateReport, reset } = useReportGenerator();
@@ -236,4 +236,4 @@ const CarbonIQDashboard = () => {
   );
 };
 
-export default CarbonIQDashboard;
+export default B2BLogisticsDashboard;

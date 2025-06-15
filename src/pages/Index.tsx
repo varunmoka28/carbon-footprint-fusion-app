@@ -1,16 +1,58 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import CarbonIQDashboard from '@/components/CarbonIQDashboard';
-import SimpleTripCalculator from '@/components/SimpleTripCalculator';
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import LogisticsEmissionCalculator from '@/components/LogisticsEmissionCalculator';
+import B2BLogisticsDashboard from '@/components/B2BLogisticsDashboard';
+import ToolCard from '@/components/ToolCard';
 import { Button } from '@/components/ui/button';
-import { BarChart2, Calculator, Leaf, BookOpen } from 'lucide-react';
+import { Leaf, BookOpen, BarChart2, Calculator, Users, ArrowLeft } from 'lucide-react';
 
-type AppMode = 'dashboard' | 'calculator';
+type ActiveTool = 'home' | 'b2bDashboard' | 'logisticsCalculator';
 
 const Index = () => {
-  const [appMode, setAppMode] = useState<AppMode>('dashboard');
+  const [activeTool, setActiveTool] = useState<ActiveTool>('home');
+
+  const renderContent = () => {
+    switch (activeTool) {
+      case 'b2bDashboard':
+        return <B2BLogisticsDashboard />;
+      case 'logisticsCalculator':
+        return <LogisticsEmissionCalculator />;
+      case 'home':
+      default:
+        return (
+          <div className="py-12 text-center animate-fade-in">
+            <h2 className="text-3xl font-bold tracking-tight text-slate-800 sm:text-4xl">
+              Your Suite of Sustainability Tools
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+              Select a tool below to begin analyzing and reducing your carbon footprint.
+            </p>
+            <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
+              <ToolCard
+                title="Logistics Emission Calculator"
+                description="Calculate carbon emissions for individual trips using distance or fuel consumption."
+                icon={Calculator}
+                onClick={() => setActiveTool('logisticsCalculator')}
+              />
+              <ToolCard
+                title="B2B Logistics Dashboard"
+                description="Analyze bulk transportation data from CSV uploads for comprehensive emissions reporting."
+                icon={BarChart2}
+                onClick={() => setActiveTool('b2bDashboard')}
+              />
+              <ToolCard
+                title="Employee Commute Calculator"
+                description="Calculate and track employee commuting emissions."
+                icon={Users}
+                onClick={() => {}}
+                isComingSoon
+              />
+            </div>
+          </div>
+        );
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
@@ -25,31 +67,25 @@ const Index = () => {
               <p className="text-xs text-muted-foreground hidden sm:block">A tool for Last Mile Carbon Emissions</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <Tabs value={appMode} onValueChange={(value) => setAppMode(value as AppMode)} className="w-auto">
-              <TabsList>
-                <TabsTrigger value="dashboard" className="flex items-center gap-2">
-                  <BarChart2 className="h-4 w-4" />
-                  Dashboard
-                </TabsTrigger>
-                <TabsTrigger value="calculator" className="flex items-center gap-2">
-                  <Calculator className="h-4 w-4" />
-                  Calculator
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+          <nav className="flex items-center gap-4">
+            {activeTool !== 'home' && (
+              <Button variant="ghost" onClick={() => setActiveTool('home')}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Tools
+              </Button>
+            )}
             <Link to="/methodology">
               <Button variant="outline" className="flex items-center gap-2">
                 <BookOpen className="h-4 w-4" />
                 Methodology
               </Button>
             </Link>
-          </div>
+          </nav>
         </div>
       </header>
       
       <main className="container mx-auto">
-        {appMode === 'dashboard' ? <CarbonIQDashboard /> : <SimpleTripCalculator />}
+        {renderContent()}
       </main>
       
       <footer className="text-center p-4 text-sm text-muted-foreground">
