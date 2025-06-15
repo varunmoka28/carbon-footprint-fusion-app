@@ -31,12 +31,15 @@ const CarbonIQDashboard = () => {
 
   const chartData = useMemo(() => {
     if (report.length === 0) return [];
-    const emissionsByClass = report.reduce((acc, trip) => {
+    const emissionsByClass = report.reduce((acc: Record<string, number>, trip: any) => {
       const vehicleClass = trip['Vehicle Category'];
       const emissions = trip['Calculated Carbon Emissions (kg CO₂e)'];
-      acc[vehicleClass] = (acc[vehicleClass] || 0) + Number(emissions);
+      const numericEmissions = Number(emissions);
+      if (vehicleClass && !isNaN(numericEmissions)) {
+        acc[vehicleClass] = (acc[vehicleClass] || 0) + numericEmissions;
+      }
       return acc;
-    }, {} as Record<string, number>);
+    }, {});
     return Object.entries(emissionsByClass).map(([name, emissions]) => ({ name, emissions: parseFloat(emissions.toFixed(2)) }));
   }, [report]);
 

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { EMISSION_FACTORS, VehicleType } from '@/lib/constants';
 import { parseCsv, findKey } from '@/lib/csvUtils';
@@ -56,13 +55,13 @@ export const useReportGenerator = () => {
       
       // --- Trip Data Header Mapping ---
       const tripVehicleIdKeys = ['vehiclenumber', 'vehicleno', 'regno', 'currentvehicleno'];
-      const distanceKeys = ['runningdistance', 'totaldistance', 'distance', 'distance_km'];
+      const distanceKeys = ['runningdistance', 'totaldistance'];
       const sourceKeys = ['source'];
       const destinationKeys = ['destination'];
-      const tripStartKeys = ['tripstartedat', 'trip started at'];
-      const assignmentUidKeys = ['assignmentuid', 'assignment uid'];
-      const consignmentNoteUidKeys = ['consignmentnoteuid', 'consignment note uid'];
-      const tripCompletedKeys = ['tripcompletedat', 'trip completed at'];
+      const tripStartKeys = ['tripstartedat'];
+      const assignmentUidKeys = ['assignmentuid'];
+      const consignmentNoteUidKeys = ['consignmentnoteuid'];
+      const tripCompletedKeys = ['tripcompletedat'];
 
       const tripsSampleRow = tripsData[0] || {};
       const tripVehicleIdKey = findKey(tripsSampleRow, tripVehicleIdKeys);
@@ -125,6 +124,8 @@ export const useReportGenerator = () => {
         if (existingTrip) {
           if (distance > existingTrip.distance_km) {
             existingTrip.distance_km = distance;
+          }
+          if (tripCompletedAt && (!existingTrip.representative_trip_completed_at || new Date(tripCompletedAt) > new Date(existingTrip.representative_trip_completed_at))) {
             existingTrip.representative_trip_completed_at = tripCompletedAt;
           }
           if (assignmentUid) existingTrip.assignment_uids.add(assignmentUid);
