@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 
 import { usePincodeData, LocationInfo } from '@/hooks/usePincodeData';
 import { calculateDistance } from '@/lib/distance';
+import { resolveLocation } from '@/lib/locationUtils'; // New import
 import ResultDisplay, { Result } from './ResultDisplay';
 import { LocationInput } from './LocationInput';
 
@@ -53,9 +54,6 @@ type FormValues = z.infer<typeof formSchema>;
 const SimpleTripCalculator = () => {
   const [result, setResult] = useState<Result | null>(null);
   const { locationList, isLoading: isLocationDataLoading } = usePincodeData();
-  const [selectedOrigin, setSelectedOrigin] = useState<LocationInfo | null>(null);
-  const [selectedDestination, setSelectedDestination] = useState<LocationInfo | null>(null);
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -75,18 +73,21 @@ const SimpleTripCalculator = () => {
   const onSubmit = (values: FormValues) => {
     setResult(null);
     if (values.calculationMode === 'distance') {
-      if (!selectedOrigin) {
-        toast.error("Invalid Origin", { description: "Please select a valid origin from the dropdown list." });
-        form.setError("origin", { message: "Please select a location." });
+      const resolvedOrigin = resolveLocation(values.origin, locationList);
+      if (!resolvedOrigin) {
+        toast.error("Invalid Origin", { description: "Please select a valid origin from the dropdown list, or be more specific." });
+        form.setError("origin", { message: "Could not find a unique location for this origin." });
         return;
       }
-      if (!selectedDestination) {
-        toast.error("Invalid Destination", { description: "Please select a valid destination from the dropdown list." });
-        form.setError("destination", { message: "Please select a location." });
+
+      const resolvedDestination = resolveLocation(values.destination, locationList);
+      if (!resolvedDestination) {
+        toast.error("Invalid Destination", { description: "Please select a valid destination from the dropdown list, or be more specific." });
+        form.setError("destination", { message: "Could not find a unique location for this destination." });
         return;
       }
       
-      let distance = calculateDistance(selectedOrigin.y, selectedOrigin.x, selectedDestination.y, selectedDestination.x);
+      let distance = calculateDistance(resolvedOrigin.y, resolvedOrigin.x, resolvedDestination.y, resolvedDestination.x);
       
       if (values.isRoundTrip) {
         distance *= 2;
@@ -103,8 +104,8 @@ const SimpleTripCalculator = () => {
         emissions,
         emissionsPerTonneKm,
         calculationMode: 'distance',
-        origin: `${selectedOrigin.name}, ${selectedOrigin.pincode}`,
-        destination: `${selectedDestination.name}, ${selectedDestination.pincode}`,
+        origin: `${resolvedOrigin.name}, ${resolvedOrigin.pincode}`,
+        destination: `${resolvedDestination.name}, ${resolvedDestination.pincode}`,
         emissionFactorDetails: {
           factor: vehicle.emissionFactor,
           source: vehicle.source,
@@ -138,8 +139,6 @@ const SimpleTripCalculator = () => {
     if (value) {
       form.reset({ calculationMode: value });
       setResult(null);
-      setSelectedOrigin(null);
-      setSelectedDestination(null);
     }
   }
 
@@ -187,15 +186,9 @@ const SimpleTripCalculator = () => {
                         <LocationInput
                           locations={locationList}
                           value={field.value}
-                          onChange={(value) => {
-                            field.onChange(value);
-                            if (selectedOrigin && value !== `${selectedOrigin.name}, ${selectedOrigin.district}`) {
-                                setSelectedOrigin(null);
-                            }
-                          }}
+                          onChange={field.onChange}
                           onLocationSelect={(location) => {
-                            setSelectedOrigin(location);
-                            field.onChange(`${location.name}, ${location.district}`);
+                            field.onChange(location.searchableString);
                             form.clearErrors("origin");
                           }}
                           placeholder="Type a city or pincode..."
@@ -212,15 +205,9 @@ const SimpleTripCalculator = () => {
                         <LocationInput
                           locations={locationList}
                           value={field.value}
-                          onChange={(value) => {
-                            field.onChange(value);
-                            if (selectedDestination && value !== `${selectedDestination.name}, ${selectedDestination.district}`) {
-                                setSelectedDestination(null);
-                            }
-                          }}
+                          onChange={field.onChange}
                           onLocationSelect={(location) => {
-                            setSelectedDestination(location);
-                            field.onChange(`${location.name}, ${location.district}`);
+                            field.onChange(location.searchableString);
                             form.clearErrors("destination");
                           }}
                           placeholder="Type a city or pincode..."
