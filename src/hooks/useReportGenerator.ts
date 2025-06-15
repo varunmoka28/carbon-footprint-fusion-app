@@ -132,8 +132,8 @@ export const useReportGenerator = () => {
           if (consignmentNoteUid) existingTrip.consignment_note_uids.add(consignmentNoteUid);
         } else {
           consolidatedTripsMap.set(compositeKey, {
-            trip_id: compositeKey,
-            vehicle_id: vehicleId,
+            physical_trip_id: compositeKey,
+            vehicle_no: vehicleId,
             source: source,
             destination: destination,
             distance_km: distance,
@@ -152,15 +152,15 @@ export const useReportGenerator = () => {
 
       // --- Stage 2: Calculation ---
       const processedData = consolidatedTrips.map((trip) => {
-        const vehicle_class_raw = vehicleClassKey ? (vehicleMap.get(trip.vehicle_id) || 'UNKNOWN') : 'HGV';
+        const vehicle_class_raw = vehicleClassKey ? (vehicleMap.get(trip.vehicle_no) || 'UNKNOWN') : 'HGV';
         const vehicle_class = (Object.keys(EMISSION_FACTORS).includes(vehicle_class_raw.toUpperCase()) ? vehicle_class_raw.toUpperCase() : 'UNKNOWN') as VehicleType;
         const emission_factor = EMISSION_FACTORS[vehicle_class];
 
         return {
-          'Physical Trip ID': trip.trip_id,
+          'Physical Trip ID': trip.physical_trip_id,
           'Assignment UID(s) Included': Array.from(trip.assignment_uids).join(', '),
           'Consignment Note UID(s)': Array.from(trip.consignment_note_uids).join(', '),
-          'Vehicle No.': trip.vehicle_id,
+          'Vehicle No.': trip.vehicle_no,
           'Source': trip.source,
           'Destination': trip.destination,
           'Running Distance (km)': trip.distance_km,

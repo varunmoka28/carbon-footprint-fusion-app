@@ -24,8 +24,17 @@ const CarbonIQDashboard = () => {
 
   const kpiData = useMemo(() => {
     if (report.length === 0) return { totalEmissions: 0, totalDistance: 0, totalTrips: 0 };
-    const totalEmissions = report.reduce((sum, trip) => sum + Number(trip['Calculated Carbon Emissions (kg CO₂e)']), 0);
-    const totalDistance = report.reduce((sum, trip) => sum + Number(trip['Running Distance (km)']), 0);
+    
+    const totalEmissions = report.reduce((sum, trip) => {
+      const emissions = Number(trip['Calculated Carbon Emissions (kg CO₂e)']);
+      return sum + (isNaN(emissions) ? 0 : emissions);
+    }, 0);
+
+    const totalDistance = report.reduce((sum, trip) => {
+      const distance = Number(trip['Running Distance (km)']);
+      return sum + (isNaN(distance) ? 0 : distance);
+    }, 0);
+
     return { totalEmissions, totalDistance, totalTrips: report.length };
   }, [report]);
 
@@ -33,14 +42,13 @@ const CarbonIQDashboard = () => {
     if (report.length === 0) return [];
     const emissionsByClass = report.reduce((acc: Record<string, number>, trip: any) => {
       const vehicleClass = trip['Vehicle Category'];
-      const emissions = trip['Calculated Carbon Emissions (kg CO₂e)'];
-      const numericEmissions = Number(emissions);
-      if (vehicleClass && !isNaN(numericEmissions)) {
-        acc[vehicleClass] = (acc[vehicleClass] || 0) + numericEmissions;
+      const emissions = Number(trip['Calculated Carbon Emissions (kg CO₂e)']);
+      if (vehicleClass && !isNaN(emissions)) {
+        acc[vehicleClass] = (acc[vehicleClass] || 0) + emissions;
       }
       return acc;
     }, {});
-    return Object.entries(emissionsByClass).map(([name, emissions]) => ({ name, emissions: parseFloat(emissions.toFixed(2)) }));
+    return Object.entries(emissionsByClass).map(([name, emissions]) => ({ name, emissions }));
   }, [report]);
 
   return (
