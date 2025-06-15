@@ -40,7 +40,7 @@ const Index = () => {
                <div className="container mx-auto">
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-2 max-w-4xl mx-auto">
                   <ToolCard
-                    title="Logistics Emission Calculator"
+                    title="Standard logistics emission calculator"
                     description="Estimate emissions for individual freight shipments based on distance, fuel, and load weight."
                     icon={LocationLeafIcon}
                     onClick={() => setActiveTool('logisticsCalculator')}
@@ -80,7 +80,7 @@ const Index = () => {
               <p className={cn(
                 "text-xs hidden sm:block",
                 isHomePage ? 'text-white/60' : 'text-muted-foreground'
-              )}>Corporate Scope 3 Transportation Emissions Platform</p>
+              )}>Scope 3 Transportation Emissions Platform</p>
             </div>
           </div>
           <nav className="flex items-center gap-2 md:gap-4">

@@ -1,3 +1,4 @@
+
 export type Vehicle = {
   name: string;
   emissionFactor: number; // kg CO2e/km
@@ -17,14 +18,14 @@ const GLEC_SOURCE = {
 
 // A detailed list of common Indian market vehicle categories
 export const VEHICLE_CATEGORIES = {
-  '2W': { name: '2-Wheeler', emissionFactor: 0.05, maxPayload: 0.05, gvw: '< 0.5t', ...GLEC_SOURCE },
-  '3W': { name: '3-Wheeler Auto', emissionFactor: 0.1, maxPayload: 0.5, gvw: '0.5t - 1t', ...GLEC_SOURCE },
-  'MINI_TRUCK': { name: 'Mini Truck (Tata Ace)', emissionFactor: 0.22, maxPayload: 0.75, gvw: '1.5t', ...GLEC_SOURCE },
-  'PICKUP': { name: 'Pickup Truck (Bolero)', emissionFactor: 0.30, maxPayload: 1.7, gvw: '3.5t', ...GLEC_SOURCE },
-  'LCV': { name: 'Light Commercial Vehicle (Tata 407)', emissionFactor: 0.42, maxPayload: 4, gvw: '4t - 7.5t', ...GLEC_SOURCE },
-  'MCV': { name: 'Medium Commercial Vehicle (10-wheeler)', emissionFactor: 0.8, maxPayload: 10, gvw: '10t - 16t', ...GLEC_SOURCE },
-  'HCV': { name: 'Heavy Commercial Vehicle (12-wheeler)', emissionFactor: 1.26, maxPayload: 21, gvw: '31t', ...GLEC_SOURCE },
-  'TRAILER_1': { name: 'Tractor Trailer (22-wheeler)', emissionFactor: 1.5, maxPayload: 35, gvw: '49t', ...GLEC_SOURCE },
+  '2W': { name: '2-Wheeler', emissionFactor: 0.05, maxPayload: 0.05, gvw: '< 0.5t', examples: 'Hero Splendor, Honda Activa', ...GLEC_SOURCE },
+  '3W': { name: '3-Wheeler Auto', emissionFactor: 0.1, maxPayload: 0.5, gvw: '0.5t - 1t', examples: 'Bajaj RE, Piaggio Ape', ...GLEC_SOURCE },
+  'MINI_TRUCK': { name: 'Mini Truck (Tata Ace)', emissionFactor: 0.22, maxPayload: 0.75, gvw: '1.5t', examples: 'Tata Ace, Mahindra Jeeto', ...GLEC_SOURCE },
+  'PICKUP': { name: 'Pickup Truck (Bolero)', emissionFactor: 0.30, maxPayload: 1.7, gvw: '3.5t', examples: 'Mahindra Bolero Pik-up, Isuzu D-Max', ...GLEC_SOURCE },
+  'LCV': { name: 'Light Commercial Vehicle (Tata 407)', emissionFactor: 0.42, maxPayload: 4, gvw: '4t - 7.5t', examples: 'Tata 407, Eicher Pro 2049', ...GLEC_SOURCE },
+  'MCV': { name: 'Medium Commercial Vehicle (10-wheeler)', emissionFactor: 0.8, maxPayload: 10, gvw: '10t - 16t', examples: 'Tata 1613, BharatBenz 1617R', ...GLEC_SOURCE },
+  'HCV': { name: 'Heavy Commercial Vehicle (12-wheeler)', emissionFactor: 1.26, maxPayload: 21, gvw: '31t', examples: 'Tata Signa 3118, Ashok Leyland 3120', ...GLEC_SOURCE },
+  'TRAILER_1': { name: 'Tractor Trailer (22-wheeler)', emissionFactor: 1.5, maxPayload: 35, gvw: '49t', examples: 'Volvo FH, Scania R-series', ...GLEC_SOURCE },
 } as const;
 
 export type VehicleId = keyof typeof VEHICLE_CATEGORIES;
