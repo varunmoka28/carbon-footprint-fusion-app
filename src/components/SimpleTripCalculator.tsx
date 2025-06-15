@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { VEHICLE_CATEGORIES, FUEL_EMISSION_FACTORS, VehicleId } from '@/lib/constants';
 import { MapPin, Route, Leaf, Fuel, Weight, Repeat, TestTube2, Waypoints } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 import { usePincodeData, LocationInfo } from '@/hooks/usePincodeData';
 import { calculateDistance } from '@/lib/distance';
