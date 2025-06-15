@@ -1,43 +1,94 @@
 
 import React from 'react';
 
-// A dictionary mapping location names to approximate SVG coordinates.
-// NOTE: These are approximations for visualization purposes only.
+// A comprehensive dictionary mapping location names to SVG coordinates.
 const locations: Record<string, { x: number; y: number }> = {
   // North
-  'DELHI': { x: 280, y: 200 },
-  'GURUGRAM': { x: 275, y: 210 },
-  'HARYANA': { x: 260, y: 180 },
-  'PUNJAB': { x: 240, y: 150 },
-  'RAJASTHAN': { x: 190, y: 280 },
-  'UTTAR PRADESH': { x: 350, y: 270 },
+  'JAMMU AND KASHMIR': { x: 380, y: 50 },
+  'SRINAGAR': { x: 370, y: 70 },
+  'LEH': { x: 420, y: 60 },
+  'HIMACHAL PRADESH': { x: 400, y: 130 },
+  'SHIMLA': { x: 405, y: 145 },
+  'PUNJAB': { x: 360, y: 180 },
+  'CHANDIGARH': { x: 390, y: 185 },
+  'AMRITSAR': { x: 350, y: 160 },
+  'UTTARAKHAND': { x: 440, y: 190 },
+  'DEHRADUN': { x: 430, y: 200 },
+  'HARYANA': { x: 380, y: 230 },
+  'GURUGRAM': { x: 395, y: 265 },
+  'GURGAON': { x: 395, y: 265 },
+  'DELHI': { x: 400, y: 260 },
+  'UTTAR PRADESH': { x: 480, y: 320 },
+  'LUCKNOW': { x: 470, y: 340 },
+  'AGRA': { x: 420, y: 320 },
+  'NOIDA': { x: 410, y: 270 },
+
   // West
-  'GUJARAT': { x: 140, y: 380 },
-  'MAHARASHTRA': { x: 230, y: 480 },
-  'MUMBAI': { x: 180, y: 490 },
+  'RAJASTHAN': { x: 280, y: 330 },
+  'JAIPUR': { x: 360, y: 330 },
+  'JODHPUR': { x: 300, y: 360 },
+  'UDAIPUR': { x: 320, y: 410 },
+  'GUJARAT': { x: 220, y: 480 },
+  'AHMEDABAD': { x: 260, y: 490 },
+  'SURAT': { x: 270, y: 550 },
+  'MAHARASHTRA': { x: 340, y: 600 },
+  'MUMBAI': { x: 290, y: 630 },
+  'PUNE': { x: 320, y: 650 },
+  'NAGPUR': { x: 430, y: 560 },
+  'GOA': { x: 310, y: 730 },
+
   // East
-  'WEST BENGAL': { x: 500, y: 350 },
-  'KOLKATA': { x: 520, y: 380 },
-  'BIHAR': { x: 460, y: 290 },
-  // South
-  'KARNATAKA': { x: 260, y: 600 },
-  'BENGALURU': { x: 300, y: 640 },
-  'BANGALORE': { x: 300, y: 640 },
-  'TAMIL NADU': { x: 310, y: 700 },
-  'CHENNAI': { x: 360, y: 650 },
-  'ANDHRA PRADESH': { x: 350, y: 580 },
-  'TELANGANA': { x: 320, y: 530 },
+  'BIHAR': { x: 580, y: 350 },
+  'PATNA': { x: 570, y: 360 },
+  'JHARKHAND': { x: 570, y: 440 },
+  'RANCHI': { x: 560, y: 450 },
+  'ODISHA': { x: 550, y: 550 },
+  'BHUBANESWAR': { x: 570, y: 560 },
+  'WEST BENGAL': { x: 630, y: 450 },
+  'KOLKATA': { x: 650, y: 480 },
+  'SIKKIM': { x: 650, y: 300 },
+  'ARUNACHAL PRADESH': { x: 750, y: 250 },
+  'NAGALAND': { x: 760, y: 340 },
+  'MANIPUR': { x: 750, y: 380 },
+  'MIZORAM': { x: 730, y: 430 },
+  'TRIPURA': { x: 700, y: 420 },
+  'MEGHALAYA': { x: 690, y: 350 },
+  'ASSAM': { x: 720, y: 330 },
+  'GUWAHATI': { x: 700, y: 340 },
+  
   // Central
-  'MADHYA PRADESH': { x: 320, y: 400 },
+  'MADHYA PRADESH': { x: 430, y: 450 },
+  'BHOPAL': { x: 410, y: 480 },
+  'INDORE': { x: 360, y: 500 },
+  'CHHATTISGARH': { x: 510, y: 520 },
+  'RAIPUR': { x: 500, y: 540 },
+
+  // South
+  'TELANGANA': { x: 430, y: 670 },
+  'HYDERABAD': { x: 420, y: 690 },
+  'ANDHRA PRADESH': { x: 450, y: 750 },
+  'VISAKHAPATNAM': { x: 520, y: 680 },
+  'KARNATAKA': { x: 380, y: 780 },
+  'BENGALURU': { x: 410, y: 810 },
+  'BANGALORE': { x: 410, y: 810 },
+  'MANGALORE': { x: 350, y: 810 },
+  'TAMIL NADU': { x: 420, y: 880 },
+  'CHENNAI': { x: 460, y: 820 },
+  'COIMBATORE': { x: 400, y: 870 },
+  'MADURAI': { x: 420, y: 910 },
+  'KERALA': { x: 380, y: 900 },
+  'KOCHI': { x: 380, y: 910 },
+  'THIRUVANANTHAPURAM': { x: 390, y: 950 },
 };
 
-// Simple logic to find coordinates for a given location string.
-const findCoords = (place: string) => {
+// Sort keys by length descending to match more specific names first (e.g., "UTTAR PRADESH" before "PRADESH")
+const sortedLocationKeys = Object.keys(locations).sort((a, b) => b.length - a.length);
+
+const findCoords = (place: string): { key: string; coords: { x: number; y: number } } | null => {
   if (!place) return null;
   const upperPlace = place.toUpperCase();
-  // Find a location key that is included in the place string.
-  const foundKey = Object.keys(locations).find(key => upperPlace.includes(key));
-  return foundKey ? locations[foundKey] : null;
+  const foundKey = sortedLocationKeys.find(key => upperPlace.includes(key));
+  return foundKey ? { key: foundKey, coords: locations[foundKey] } : null;
 };
 
 interface IndiaMapProps {
@@ -46,50 +97,87 @@ interface IndiaMapProps {
 }
 
 const IndiaMap = ({ origin = '', destination = '' }: IndiaMapProps) => {
-  const originCoords = findCoords(origin);
-  const destCoords = findCoords(destination);
+  const originInfo = findCoords(origin);
+  const destInfo = findCoords(destination);
 
-  // A simplified, but complete, SVG path for India's outline.
-  const indiaPath = "M282.4,74.5c-2.4,1.2-4.8,2.8-6.9,4.9l-51.9,51.9c-2.1,2.1-3.7,4.5-4.9,7.3l-20.7,47.4c-1.2,2.8-1.9,5.9-1.9,9.1v23.5l-23.5,23.5c-3.7,3.7-6.5,8.1-8.2,13.1l-24.6,71.5c-1.7,5-2.6,10.4-2.6,15.9v108.3c0,11.2,3.9,21.8,10.8,30.2l56.5,69.5c8.4,10.3,20.5,16.5,33.9,16.5h111.4c13.4,0,25.5-6.2,33.9-16.5l56.5-69.5c6.9-8.4,10.8-19,10.8-30.2V323.3c0-5.5-0.9-10.9-2.6-15.9l-24.6-71.5c-1.7-5-4.5-9.4-8.2-13.1l-23.5-23.5V176c0-3.2-0.7-6.3-1.9-9.1l-20.7-47.4c-1.2-2.8-2.8-5.2-4.9-7.3l-51.9-51.9C287.2,77.3,284.8,75.7,282.4,74.5z";
+  // A more detailed, high-quality SVG path for India's outline.
+  const indiaPath = "M731.4,475.9c-0.1-0.1-0.2-0.1-0.3-0.2l-12.3-11.3c-1.4-1.3-3.3-2-5.2-2s-3.8,0.7-5.2,2l-11.4,10.5c-0.2,0.2-0.4,0.3-0.6,0.5l-2.6,2.4c-1.3,1.2-3.1,1.9-4.9,1.9s-3.6-0.7-4.9-1.9l-11.4-10.5c-1.4-1.3-3.3-2-5.2-2s-3.8,0.7-5.2,2l-12.3,11.3c-0.1,0.1-0.2,0.2-0.2,0.2l-16.7,15.4c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2l-16.7-15.4c-1.4-1.3-3.3-2-5.2-2s-3.8,0.7-5.2,2l-16.7,15.4c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2l-11.4-10.5c-1.3-1.2-3.1-1.9-4.9-1.9s-3.6,0.7-4.9,1.9l-2.6-2.4c-0.2-0.2-0.4-0.3-0.6-0.5l-11.4-10.5c-1.4-1.3-3.3-2-5.2-2s-3.8,0.7-5.2,2l-12.3,11.3c-0.1,0.1-0.2,0.1-0.3,0.2c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2l-12.3-11.3c-0.1-0.1-0.2-0.2-0.2-0.2l-11.4-10.5c-1.3-1.2-3.1-1.9-4.9-1.9s-3.6,0.7-4.9,1.9l-11.4,10.5c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2l-16.7-15.4c-1.4-1.3-3.3-2-5.2-2s-3.8,0.7-5.2,2l-16.7,15.4c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2,2L360,503.9l-26.6,24.5c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2l-11.4-10.5c-1.3-1.2-3.1-1.9-4.9-1.9s-3.6,0.7-4.9,1.9l-11.4,10.5c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2l-11.4-10.5c-1.3-1.2-3.1-1.9-4.9-1.9s-3.6,0.7-4.9,1.9l-12.3,11.3c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2L194,480.1c-1.4-1.3-3.3-2-5.2-2s-3.8,0.7-5.2,2l-21.7,20c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2l-16.7-15.4v-46.1c0-2-0.8-3.9-2.2-5.3l-21.9-22.6c-1.5-1.5-3.5-2.3-5.6-2.3H2.2c-1.2,0-2.2,1-2.2,2.2v29.3c0,1.2,1,2.2,2.2,2.2h93.1c1.7,0,3.3,0.7,4.5,1.9l26.4,27.2c1.2,1.3,1.9,3,1.9,4.8v41.3c0,2-0.8,3.9-2.2,5.3l-11.4,11.8c-1.5,1.5-3.5,2.3-5.6,2.3H2.2c-1.2,0-2.2,1-2.2,2.2v29.3c0,1.2,1,2.2,2.2,2.2h101.9c2,0,4-0.8,5.5-2.3l16.1-16.6c1.5-1.5,3.5-2.3,5.6-2.3h22.8c1.7,0,3.3,0.7,4.5,1.9l26.4,27.2L186.1,600c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2l-16.7-15.4c-1.4-1.3-3.3-2-5.2-2s-3.8,0.7-5.2,2l-21.7,20c-1.4,1.3-3.3,2-5.2,2s-3.8-0.7-5.2-2l-11.4-10.5c-1.3-1.2-3.1-1.9-4.9-1.9s-3.6,0.7-4.9,1.9L22.9,640.8c-1.4,1.3-2.2,3.1-2.2,4.9v218c0,4.2,3.4,7.6,7.6,7.6h738.9c4.2,0,7.6-3.4,7.6-7.6V503.9c0-1.9-0.7-3.6-2-4.9L731.4,475.9z M450.5,83.8L426,134.3c-2,4.1-6,6.9-10.6,6.9h-42.9c-4.5,0-8.6-2.8-10.6-6.9L337.5,83.8c-2-4.1-6-6.9-10.6-6.9h-42.9c-4.5,0-8.6-2.8-10.6-6.9L249,25.4c-2-4.1-6-6.9-10.6-6.9h-42.9c-4.5,0-8.6-2.8-10.6-6.9L160.4,0H789.7L461.1,76.9c-4.5,0-8.6,2.8-10.6,6.9z";
 
   return (
     <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-lg p-2">
-      <svg viewBox="0 0 600 750" className="w-full h-full">
+      <svg viewBox="100 0 700 900" className="w-full h-full">
+        <style>
+          {`
+            .route-line {
+              stroke-dasharray: 1000;
+              stroke-dashoffset: 1000;
+              animation: draw-line 2s ease-out forwards;
+            }
+            @keyframes draw-line {
+              to {
+                stroke-dashoffset: 0;
+              }
+            }
+            .location-label {
+              font-family: 'Poppins', sans-serif;
+              font-size: 14px;
+              paint-order: stroke;
+              stroke: white;
+              stroke-width: 3px;
+              stroke-linecap: butt;
+              stroke-linejoin: miter;
+              font-weight: 600;
+            }
+          `}
+        </style>
         <path
           d={indiaPath}
           fill="#E5E7EB"
-          stroke="#6B7280"
-          strokeWidth="1"
+          stroke="#9CA3AF"
+          strokeWidth="0.5"
         />
-        
+
         {/* Route Line */}
-        {originCoords && destCoords && (
+        {originInfo && destInfo && (
           <line
-            x1={originCoords.x}
-            y1={originCoords.y}
-            x2={destCoords.x}
-            y2={destCoords.y}
-            stroke="#10B981"
+            className="route-line"
+            x1={originInfo.coords.x}
+            y1={originInfo.coords.y}
+            x2={destInfo.coords.x}
+            y2={destInfo.coords.y}
+            stroke="#10B981" 
             strokeWidth="3"
-            strokeDasharray="5 5"
             markerEnd="url(#arrowhead)"
           />
         )}
         
-        {/* Origin Point */}
-        {originCoords && (
+        {/* Origin Point and Label */}
+        {originInfo && (
           <g>
-            <circle cx={originCoords.x} cy={originCoords.y} r="8" fill="rgba(59, 130, 246, 0.3)" />
-            <circle cx={originCoords.x} cy={originCoords.y} r="4" fill="#3B82F6" />
+            <circle cx={originInfo.coords.x} cy={originInfo.coords.y} r="8" fill="rgba(59, 130, 246, 0.4)" />
+            <circle cx={originInfo.coords.x} cy={originInfo.coords.y} r="4" fill="#3B82F6" />
+            <text x={originInfo.coords.x + 12} y={originInfo.coords.y + 5} className="location-label" fill="#3B82F6">
+              {originInfo.key}
+            </text>
           </g>
         )}
 
-        {/* Destination Point */}
-        {destCoords && (
+        {/* Destination Point and Label */}
+        {destInfo && (
           <g>
-            <circle cx={destCoords.x} cy={destCoords.y} r="8" fill="rgba(239, 68, 68, 0.3)" />
-            <circle cx={destCoords.x} cy={destCoords.y} r="4" fill="#EF4444" />
+            <circle cx={destInfo.coords.x} cy={destInfo.coords.y} r="8" fill="rgba(239, 68, 68, 0.4)" />
+            <circle cx={destInfo.coords.x} cy={destInfo.coords.y} r="4" fill="#EF4444" />
+            <text x={destInfo.coords.x + 12} y={destInfo.coords.y + 5} className="location-label" fill="#EF4444">
+              {destInfo.key}
+            </text>
           </g>
+        )}
+
+        {!(originInfo && destInfo) && (
+            <text x="50%" y="50%" textAnchor="middle" fill="#6B7280" fontSize="16px" fontFamily="Poppins, sans-serif">
+                { !originInfo && !destInfo ? "Route data unavailable." :
+                  !originInfo ? "Origin not mapped." : "Destination not mapped." }
+            </text>
         )}
         
         {/* Arrowhead definition for the line */}
@@ -98,7 +186,7 @@ const IndiaMap = ({ origin = '', destination = '' }: IndiaMapProps) => {
             id="arrowhead"
             markerWidth="10"
             markerHeight="7"
-            refX="0"
+            refX="9"
             refY="3.5"
             orient="auto"
           >
