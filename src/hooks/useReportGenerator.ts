@@ -182,7 +182,7 @@ export const useReportGenerator = () => {
 
       const consolidatedTrips = Array.from(consolidatedTripsMap.values());
 
-      // --- Stage 2: Calculation (Strict) ---
+      // --- Stage 2: Calculation (with fallback) ---
       const getVehicleCategory = (rawClass: string | undefined): VehicleType => {
         if (!rawClass) return 'UNKNOWN';
         const lowerClass = String(rawClass).toLowerCase();
@@ -199,22 +199,26 @@ export const useReportGenerator = () => {
         return 'UNKNOWN';
       };
 
+      const unmappedVehicles = new Set<string>();
       const processedData: ReportRow[] = consolidatedTrips.map((trip, index) => {
         const vehicleId = trip.vehicle_no;
+        let vehicle_class: VehicleType;
 
-        if (!vehicleMap.has(vehicleId)) {
-          throw new Error(`Error: Vehicle ${vehicleId} from your trips file was not found in the vehicle information file.`);
-        }
+        if (vehicleMap.has(vehicleId)) {
+          const rawClassFromFile = vehicleMap.get(vehicleId);
+          if (!rawClassFromFile) {
+              throw new Error(`Error: Vehicle Class is missing for vehicle ${vehicleId} in your vehicles file.`);
+          }
 
-        const rawClassFromFile = vehicleMap.get(vehicleId);
-        if (!rawClassFromFile) {
-            throw new Error(`Error: Vehicle Class is missing for vehicle ${vehicleId} in your vehicles file.`);
-        }
+          vehicle_class = getVehicleCategory(rawClassFromFile);
 
-        const vehicle_class = getVehicleCategory(rawClassFromFile);
-
-        if (vehicle_class === 'UNKNOWN') {
-          throw new Error(`Error: Unrecognized vehicle class '${rawClassFromFile}' for vehicle ${vehicleId}.`);
+          if (vehicle_class === 'UNKNOWN') {
+            throw new Error(`Error: Unrecognized vehicle class '${rawClassFromFile}' for vehicle ${vehicleId}.`);
+          }
+        } else {
+          // Vehicle not found in vehicles file, assume HGV
+          vehicle_class = 'HGV';
+          unmappedVehicles.add(vehicleId);
         }
         
         const emission_factor = EMISSION_FACTORS[vehicle_class];
@@ -234,6 +238,12 @@ export const useReportGenerator = () => {
         };
       }).filter((t) => !isNaN(t['Running Distance (km)']) && !isNaN(t['Calculated Carbon Emissions (kg CO₂e)']));
     
+      if (unmappedVehicles.size > 0) {
+        const vehicleList = Array.from(unmappedVehicles).slice(0, 5).join(', ');
+        const moreCount = unmappedVehicles.size > 5 ? ` and ${unmappedVehicles.size - 5} more` : '';
+        setAssumptionNotes(prev => [...prev, `Could not find vehicles like '${vehicleList}${moreCount}' in your vehicles file. They have been assumed to be 'HGV'.`]);
+      }
+
       setReport(processedData);
 
     } catch (e: any) {
