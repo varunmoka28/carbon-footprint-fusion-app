@@ -18,20 +18,27 @@ const ToolCard = ({ title, description, icon: Icon, onClick, isComingSoon = fals
     <Card
       onClick={!isComingSoon ? onClick : undefined}
       className={cn(
-        "cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1 text-left",
+        "cursor-pointer transition-all hover:shadow-xl hover:-translate-y-2 text-left group relative overflow-hidden",
+        "bg-card", // Explicitly set background for clarity
         isComingSoon && "bg-muted/50 cursor-not-allowed opacity-75"
       )}
     >
-      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg font-medium">{title}</CardTitle>
-        <Icon className="h-6 w-6 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">{description}</p>
-        {isComingSoon && (
-          <Badge variant="secondary" className="mt-4 font-semibold">Coming Soon</Badge>
-        )}
-      </CardContent>
+      <Icon className="absolute -right-4 -bottom-4 h-32 w-32 text-gray-200 opacity-50 group-hover:scale-110 group-hover:opacity-60 transition-transform duration-300" />
+
+      <div className="relative z-10">
+        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+          <CardTitle className="text-lg font-medium pr-4">{title}</CardTitle>
+          <div className="bg-eco-green/10 p-2 rounded-lg">
+            <Icon className="h-6 w-6 text-eco-green" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">{description}</p>
+          {isComingSoon && (
+            <Badge variant="secondary" className="mt-4 font-semibold">Coming Soon</Badge>
+          )}
+        </CardContent>
+      </div>
     </Card>
   );
 };

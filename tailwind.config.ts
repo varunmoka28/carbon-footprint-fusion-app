@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 import { fontFamily } from "tailwindcss/defaultTheme";
 
@@ -21,7 +22,7 @@ export default {
 		extend: {
       fontFamily: {
         sans: ["Inter", ...fontFamily.sans],
-        poppins: ["Poppins", "sans-serif"],
+        merriweather: ["Merriweather", "serif"],
       },
 			colors: {
 				border: 'hsl(var(--border))',
@@ -33,6 +34,8 @@ export default {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))'
 				},
+        'dark-pine': '#1A2E2A',
+        'light-stone': '#F4F6F5',
         'eco-green': {
           DEFAULT: '#2ECC71',
           'dark': '#27AE60',
