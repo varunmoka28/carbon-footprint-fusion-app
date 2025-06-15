@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, BookOpen, Route, Weight, FileWarning, HelpCircle } from 'lucide-react';
+import { ArrowLeft, BookOpen, Route, Weight, FileWarning, HelpCircle, TrendingDown } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -91,6 +90,39 @@ const Methodology = () => {
             <p className="text-xs text-muted-foreground mt-4">
               Source: Emission factors are derived from industry standards like the GLEC Framework and are subject to regional and operational variations. The values used here are illustrative for demonstration.
             </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingDown className="h-5 w-5 text-blue-500" />
+              Freight Efficiency: Tonne-Kilometer Emissions
+            </CardTitle>
+            <CardDescription>
+              Measuring the carbon intensity of moving goods.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-muted p-4 rounded-lg text-center font-mono my-4">
+              Emissions per Tonne-km (kg CO₂e/t-km) = Total Emissions / (Distance × Load Weight)
+            </div>
+            <div className="space-y-4 text-muted-foreground">
+              <p>
+                While total emissions provide a high-level view, the <strong>tonne-kilometer (t-km)</strong> emission metric offers deeper insight into logistics efficiency. It measures the amount of CO₂e produced to move one tonne of freight over one kilometer.
+              </p>
+              <p>
+                This Key Performance Indicator (KPI) helps businesses:
+              </p>
+              <ul className="list-disc list-inside space-y-2 pl-4">
+                <li><strong>Benchmark Performance:</strong> Compare the carbon efficiency of different routes, vehicles, or shipping strategies.</li>
+                <li><strong>Identify Inefficiencies:</strong> Higher t-km values can indicate issues like under-utilized vehicle capacity (empty or partially loaded trips).</li>
+                <li><strong>Drive Optimization:</strong> Setting targets to reduce kg CO₂e/t-km encourages better load planning and network optimization, leading to both cost savings and a lower carbon footprint.</li>
+              </ul>
+              <p>
+                In our calculator, this value is provided when you input the optional "Load Weight". A lower number signifies greater carbon efficiency for your freight operations.
+              </p>
+            </div>
           </CardContent>
         </Card>
         

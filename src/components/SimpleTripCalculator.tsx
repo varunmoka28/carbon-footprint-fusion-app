@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,14 +12,18 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { EMISSION_FACTORS, FUEL_EMISSION_FACTORS, VehicleType, FuelType } from '@/lib/constants';
+import { EMISSION_FACTORS, FUEL_EMISSION_FACTORS } from '@/lib/constants';
 import { MapPin, Route, Leaf, Fuel, Weight, Repeat, TestTube2, Waypoints } from 'lucide-react';
+
+import { usePincodeData } from '@/hooks/usePincodeData';
+import { calculateDistance } from '@/lib/distance';
+import ResultDisplay, { Result } from './ResultDisplay';
 
 const formSchema = z.discriminatedUnion("calculationMode", [
   z.object({
     calculationMode: z.literal("distance"),
-    origin: z.string().min(1, { message: "Origin is required." }),
-    destination: z.string().min(1, { message: "Destination is required." }),
+    origin: z.string().min(1, { message: "Origin is required." }).regex(/\b(\d{6})\b/, { message: "Origin must contain a 6-digit pincode." }),
+    destination: z.string().min(1, { message: "Destination is required." }).regex(/\b(\d{6})\b/, { message: "Destination must contain a 6-digit pincode." }),
     vehicleType: z.enum(['LGV', 'MGV', 'HGV'], { required_error: "Please select a vehicle type." }),
     loadWeight: z.coerce.number().positive({ message: "Weight must be positive." }).optional(),
     isRoundTrip: z.boolean().default(false),
@@ -33,46 +36,10 @@ const formSchema = z.discriminatedUnion("calculationMode", [
 ]);
 
 type FormValues = z.infer<typeof formSchema>;
-type Result = {
-  emissions: number;
-  distance?: number;
-  emissionsPerTonneKm?: number;
-  calculationMode: 'distance' | 'fuel';
-};
-
-const ResultDisplay = ({ emissions, distance, emissionsPerTonneKm, calculationMode }: Result) => (
-  <div className="mt-6 p-6 bg-slate-100 rounded-lg animate-fade-in space-y-4">
-    <div className="text-center">
-      <p className="font-poppins text-3xl font-bold text-eco-green-dark">{emissions.toFixed(2)} kg CO₂e</p>
-      <p className="text-sm text-muted-foreground">Total Emissions</p>
-    </div>
-    <div className="flex justify-between items-start pt-4 border-t text-center w-full">
-      {calculationMode === 'distance' && typeof distance !== 'undefined' && (
-        <div className="flex-1">
-          <p className="font-bold text-lg">{distance.toFixed(0)} km</p>
-          <p className="text-sm text-muted-foreground">Estimated Distance</p>
-        </div>
-      )}
-      {typeof emissionsPerTonneKm !== 'undefined' && (
-         <div className="flex-1">
-          <p className="font-bold text-lg">{emissionsPerTonneKm.toFixed(4)}</p>
-          <p className="text-sm text-muted-foreground">kg CO₂e/t-km</p>
-        </div>
-      )}
-      {calculationMode === 'distance' && (
-        <div className="flex-1">
-          <div className="w-24 h-16 bg-slate-200 rounded-md flex items-center justify-center mx-auto">
-            <Waypoints className="h-8 w-8 text-slate-400"/>
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">Route Visualization</p>
-        </div>
-      )}
-    </div>
-  </div>
-);
 
 const SimpleTripCalculator = () => {
   const [result, setResult] = useState<Result | null>(null);
+  const { pincodeDb } = usePincodeData();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -87,13 +54,31 @@ const SimpleTripCalculator = () => {
   const calculationMode = form.watch('calculationMode');
   const fuelType = form.watch('fuelType' as 'fuelType');
 
-  // Simulate an API call to get distance
+  // Simulate an API call to get distance as a fallback
   const getSimulatedDistance = () => Math.floor(Math.random() * (1000 - 50)) + 50;
 
   const onSubmit = (values: FormValues) => {
     setResult(null);
     if (values.calculationMode === 'distance') {
-      let distance = getSimulatedDistance();
+      let distance: number;
+      const originPincodeMatch = values.origin.match(/\b(\d{6})\b/);
+      const destPincodeMatch = values.destination.match(/\b(\d{6})\b/);
+
+      if (pincodeDb && originPincodeMatch && destPincodeMatch) {
+        const originData = pincodeDb[originPincodeMatch[1]];
+        const destData = pincodeDb[destPincodeMatch[1]];
+
+        if (originData && destData) {
+          distance = calculateDistance(originData.y, originData.x, destData.y, destData.x);
+        } else {
+          distance = getSimulatedDistance();
+          toast.warning("Could not find one or both pincodes. Using a simulated distance.");
+        }
+      } else {
+        distance = getSimulatedDistance();
+        toast.info("Pincodes not found in input. Using a simulated distance.");
+      }
+      
       if (values.isRoundTrip) {
         distance *= 2;
       }
@@ -102,7 +87,7 @@ const SimpleTripCalculator = () => {
       if (values.loadWeight && values.loadWeight > 0) {
         emissionsPerTonneKm = emissions / (distance * values.loadWeight);
       }
-      setResult({ distance, emissions, emissionsPerTonneKm, calculationMode: 'distance' });
+      setResult({ distance, emissions, emissionsPerTonneKm, calculationMode: 'distance', origin: values.origin, destination: values.destination });
     } else { // 'fuel' mode
       const emissions = values.fuelConsumed * FUEL_EMISSION_FACTORS[values.fuelType];
       setResult({ emissions, calculationMode: 'fuel' });
@@ -160,16 +145,16 @@ const SimpleTripCalculator = () => {
               {calculationMode === 'distance' && (
                 <div className="space-y-4 animate-fade-in">
                   <FormField control={form.control} name="origin" render={({ field }) => (
-                    <FormItem><div className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><FormControl><Input placeholder="Origin Location" className="pl-10" {...field} /></FormControl></div><FormMessage /></FormItem>
+                    <FormItem><div className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><FormControl><Input placeholder="Origin, e.g. Mumbai 400001" className="pl-10" {...field} /></FormControl></div><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="destination" render={({ field }) => (
-                    <FormItem><div className="relative"><Route className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><FormControl><Input placeholder="Destination Location" className="pl-10" {...field} /></FormControl></div><FormMessage /></FormItem>
+                    <FormItem><div className="relative"><Route className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><FormControl><Input placeholder="Destination, e.g. Delhi 110001" className="pl-10" {...field} /></FormControl></div><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="vehicleType" render={({ field }) => (
                      <FormItem><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select Vehicle Type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="LGV">Light Goods Vehicle (LGV)</SelectItem><SelectItem value="MGV">Medium Goods Vehicle (MGV)</SelectItem><SelectItem value="HGV">Heavy Goods Vehicle (HGV)</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                   )} />
                    <FormField control={form.control} name="loadWeight" render={({ field }) => (
-                    <FormItem><div className="relative"><Weight className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><FormControl><Input type="number" placeholder="Load Weight (tonnes) (Optional)" className="pl-10" {...field} onChange={event => field.onChange(event.target.value === '' ? undefined : +event.target.value)} /></FormControl></div><FormMessage /></FormItem>
+                    <FormItem><div className="relative"><Weight className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><FormControl><Input type="number" placeholder="Load Weight (tonnes) (Optional)" className="pl-10" {...field} value={field.value ?? ''} onChange={event => field.onChange(event.target.value === '' ? undefined : +event.target.value)} /></FormControl></div><FormMessage /></FormItem>
                   )} />
                    <FormField control={form.control} name="isRoundTrip" render={({ field }) => (
                     <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 shadow-sm"><Repeat className="h-5 w-5 text-muted-foreground" /><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><Label>Include empty return journey?</Label></div></FormItem>
@@ -194,7 +179,7 @@ const SimpleTripCalculator = () => {
             </form>
           </Form>
 
-          {result && <ResultDisplay {...result} />}
+          {result && <ResultDisplay {...result} pincodeDb={pincodeDb} />}
         </CardContent>
       </Card>
     </div>
