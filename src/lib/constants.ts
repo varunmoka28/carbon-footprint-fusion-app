@@ -1,5 +1,3 @@
-
-import { GLEC_SOURCE } from './sources';
 export type Vehicle = {
   name: string;
   emissionFactor: number; // kg CO2e/km
