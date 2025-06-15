@@ -33,65 +33,6 @@ export const useReportGenerator = () => {
     vehicleClassKey: string | null;
   } | null>(null);
 
-  const finishReportGeneration = ({ consolidatedTrips, vehicleMap, vehicleClassKey, manualClassifications }: {
-    consolidatedTrips: any[];
-    vehicleMap: Map<string, string>;
-    vehicleClassKey: string | null;
-    manualClassifications: Record<string, VehicleType>;
-  }) => {
-    // --- Stage 2: Calculation ---
-    const getVehicleCategory = (rawClass: string | undefined): VehicleType => {
-      if (!rawClass) return 'UNKNOWN';
-      const lowerClass = String(rawClass).toLowerCase();
-
-      const upperClass = String(rawClass).toUpperCase();
-      if (Object.keys(EMISSION_FACTORS).includes(upperClass)) {
-        return upperClass as VehicleType;
-      }
-
-      if (lowerClass.includes('heavy') || lowerClass.includes('hgv')) return 'HGV';
-      if (lowerClass.includes('medium') || lowerClass.includes('mgv')) return 'MGV';
-      if (lowerClass.includes('light') || lowerClass.includes('lgv')) return 'LGV';
-
-      return 'UNKNOWN';
-    };
-
-    const processedData: ReportRow[] = consolidatedTrips.map((trip, index) => {
-      let vehicle_class: VehicleType;
-      const manual_class = manualClassifications[trip.vehicle_no];
-
-      if (manual_class) {
-        // Path 2: Data Provided by User
-        vehicle_class = manual_class;
-      } else if (vehicleClassKey) {
-        // Path 1: Data Found in File
-        const raw_class_from_file = vehicleMap.get(trip.vehicle_no);
-        vehicle_class = getVehicleCategory(raw_class_from_file);
-      } else {
-        // Path 3: Fallback Assumption (vehicleClassKey was never found)
-        vehicle_class = 'HGV';
-      }
-      
-      const emission_factor = EMISSION_FACTORS[vehicle_class];
-
-      return {
-        'Physical Trip ID': `TRIP-${index + 1}`,
-        'Assignment UID(s) Included': Array.from(trip.assignment_uids).join(', '),
-        'Consignment Note UID(s)': Array.from(trip.consignment_note_uids).join(', '),
-        'Vehicle No.': trip.vehicle_no,
-        'Source': trip.source,
-        'Destination': trip.destination,
-        'Running Distance (km)': trip.distance_km,
-        'Representative Trip Completed At': trip.representative_trip_completed_at || 'N/A',
-        'Vehicle Category': vehicle_class,
-        'Emission Factor (kg CO₂e/km)': emission_factor,
-        'Calculated Carbon Emissions (kg CO₂e)': trip.distance_km * emission_factor,
-      };
-    }).filter((t) => !isNaN(t['Running Distance (km)']) && !isNaN(t['Calculated Carbon Emissions (kg CO₂e)']));
-    
-    setReport(processedData);
-  }
-
   const generateReport = async ({ tripsFile, vehiclesFile }: ReportGeneratorInput) => {
     if (!tripsFile || !vehiclesFile) {
       setError("Please upload both trips and vehicles CSV files.");
@@ -101,8 +42,6 @@ export const useReportGenerator = () => {
     setError(null);
     setReport([]);
     setAssumptionNotes([]);
-    setVehiclesToClassify([]);
-    setPendingReportData(null);
 
     try {
       const tripsData = await parseCsv(tripsFile);
@@ -128,16 +67,16 @@ export const useReportGenerator = () => {
         throw new Error(`Vehicles CSV Error: Could not find a vehicle identifier column. Found columns: [${availableColumns}]. Expected a column header like 'Vehicle Number', 'Reg No', etc.`);
       }
       
-      if (vehicleClassKey) {
-        vehiclesData.forEach((v: any) => {
-            if(v[vehicleIdKey]) {
-                vehicleMap.set(String(v[vehicleIdKey]), v[vehicleClassKey])
-            }
-        });
-      } else {
-        setAssumptionNotes(prev => [...prev, `The 'vehicle class' column was not found in your vehicles file (e.g., 'vehicleclass', 'category', 'type'). All vehicles have been assumed to be 'HGV' for a conservative emission estimate.`]);
+      if (!vehicleClassKey) {
+        throw new Error("Error: Could not find the 'Vehicle Class' column in your Vehicles CSV file. Please ensure the column is present and named appropriately.");
       }
       
+      vehiclesData.forEach((v: any) => {
+          if(v[vehicleIdKey]) {
+              vehicleMap.set(String(v[vehicleIdKey]), v[vehicleClassKey])
+          }
+      });
+
       // --- Trip Data Header Mapping ---
       const tripVehicleIdKeys = ['vehiclenumber', 'vehicleno', 'regno', 'currentvehicleno'];
       const distanceKeys = ['runningdistance', 'totaldistance'];
@@ -243,49 +182,65 @@ export const useReportGenerator = () => {
 
       const consolidatedTrips = Array.from(consolidatedTripsMap.values());
 
-      // --- New: Identify Unmatched Vehicles & Pause if Needed ---
-      if (vehicleClassKey) {
-        const allTripVehicles = new Set(consolidatedTrips.map(t => t.vehicle_no));
-        const unmatchedVehicles = [...allTripVehicles].filter(v => !vehicleMap.has(v) || !vehicleMap.get(v));
+      // --- Stage 2: Calculation (Strict) ---
+      const getVehicleCategory = (rawClass: string | undefined): VehicleType => {
+        if (!rawClass) return 'UNKNOWN';
+        const lowerClass = String(rawClass).toLowerCase();
 
-        if (unmatchedVehicles.length > 0) {
-          setVehiclesToClassify(unmatchedVehicles);
-          setPendingReportData({ consolidatedTrips, vehicleMap, vehicleClassKey });
-          setIsLoading(false); // Stop loading, wait for user input
-          return; // PAUSE execution
+        const upperClass = String(rawClass).toUpperCase();
+        if (Object.keys(EMISSION_FACTORS).includes(upperClass)) {
+          return upperClass as VehicleType;
         }
-      }
 
-      // If we reach here, no user input is needed. Proceed with final calculations.
-      finishReportGeneration({ consolidatedTrips, vehicleMap, vehicleClassKey, manualClassifications: {} });
+        if (lowerClass.includes('heavy') || lowerClass.includes('hgv')) return 'HGV';
+        if (lowerClass.includes('medium') || lowerClass.includes('mgv')) return 'MGV';
+        if (lowerClass.includes('light') || lowerClass.includes('lgv')) return 'LGV';
+
+        return 'UNKNOWN';
+      };
+
+      const processedData: ReportRow[] = consolidatedTrips.map((trip, index) => {
+        const vehicleId = trip.vehicle_no;
+
+        if (!vehicleMap.has(vehicleId)) {
+          throw new Error(`Error: Vehicle ${vehicleId} from your trips file was not found in the vehicle information file.`);
+        }
+
+        const rawClassFromFile = vehicleMap.get(vehicleId);
+        if (!rawClassFromFile) {
+            throw new Error(`Error: Vehicle Class is missing for vehicle ${vehicleId} in your vehicles file.`);
+        }
+
+        const vehicle_class = getVehicleCategory(rawClassFromFile);
+
+        if (vehicle_class === 'UNKNOWN') {
+          throw new Error(`Error: Unrecognized vehicle class '${rawClassFromFile}' for vehicle ${vehicleId}.`);
+        }
+        
+        const emission_factor = EMISSION_FACTORS[vehicle_class];
+
+        return {
+          'Physical Trip ID': `TRIP-${index + 1}`,
+          'Assignment UID(s) Included': Array.from(trip.assignment_uids).join(', '),
+          'Consignment Note UID(s)': Array.from(trip.consignment_note_uids).join(', '),
+          'Vehicle No.': vehicleId,
+          'Source': trip.source,
+          'Destination': trip.destination,
+          'Running Distance (km)': trip.distance_km,
+          'Representative Trip Completed At': trip.representative_trip_completed_at || 'N/A',
+          'Vehicle Category': vehicle_class,
+          'Emission Factor (kg CO₂e/km)': emission_factor,
+          'Calculated Carbon Emissions (kg CO₂e)': trip.distance_km * emission_factor,
+        };
+      }).filter((t) => !isNaN(t['Running Distance (km)']) && !isNaN(t['Calculated Carbon Emissions (kg CO₂e)']));
+    
+      setReport(processedData);
 
     } catch (e: any) {
       setError(e.message || "An error occurred during processing.");
       setReport([]);
     } finally {
-      // This will only run for the initial part. The final isLoading is set in continueGeneration
-      if (pendingReportData === null) {
-        setIsLoading(false);
-      }
-    }
-  };
-
-  const continueGenerationWithClassifications = (manualClassifications: Record<string, VehicleType>) => {
-    if (!pendingReportData) {
-      setError("Could not continue report generation. Intermediate data was lost.");
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      finishReportGeneration({ ...pendingReportData, manualClassifications });
-    } catch (e: any) {
-      setError(e.message || "An error occurred during the final calculation.");
-    } finally {
       setIsLoading(false);
-      setVehiclesToClassify([]);
-      setPendingReportData(null);
     }
   };
 
@@ -293,9 +248,7 @@ export const useReportGenerator = () => {
     setReport([]);
     setError(null);
     setAssumptionNotes([]);
-    setVehiclesToClassify([]);
-    setPendingReportData(null);
   };
 
-  return { report, isLoading, error, assumptionNotes, generateReport, reset, vehiclesToClassify, continueGenerationWithClassifications };
+  return { report, isLoading, error, assumptionNotes, generateReport, reset };
 };

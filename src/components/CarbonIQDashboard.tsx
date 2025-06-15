@@ -9,14 +9,10 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useReportGenerator, ReportRow } from '@/hooks/useReportGenerator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { VehicleType } from '@/lib/constants';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 
 const CarbonIQDashboard = () => {
   const [files, setFiles] = useState<{ trips: File | null; vehicles: File | null }>({ trips: null, vehicles: null });
-  const { report, isLoading, error, assumptionNotes, generateReport, reset, vehiclesToClassify, continueGenerationWithClassifications } = useReportGenerator();
-  const [manualClassifications, setManualClassifications] = useState<Record<string, VehicleType>>({});
+  const { report, isLoading, error, assumptionNotes, generateReport, reset } = useReportGenerator();
 
   const handleFileUpload = (file: File, type: 'trips' | 'vehicles') => {
     setFiles(prev => ({ ...prev, [type]: file }));
@@ -25,15 +21,6 @@ const CarbonIQDashboard = () => {
   
   const handleGenerateReport = () => {
     generateReport({ tripsFile: files.trips, vehiclesFile: files.vehicles });
-  };
-
-  const handleClassificationChange = (vehicleId: string, category: VehicleType) => {
-    setManualClassifications(prev => ({ ...prev, [vehicleId]: category }));
-  };
-  
-  const handleContinueClassification = () => {
-    continueGenerationWithClassifications(manualClassifications);
-    setManualClassifications({}); // Reset for the next run
   };
 
   const kpiData = useMemo(() => {
@@ -65,49 +52,8 @@ const CarbonIQDashboard = () => {
     return Object.entries(emissionsByClass).map(([name, emissions]) => ({ name, emissions }));
   }, [report]);
 
-  const isClassificationComplete = useMemo(() => {
-    if (vehiclesToClassify.length === 0) return false;
-    return vehiclesToClassify.every(v => !!manualClassifications[v]);
-  }, [vehiclesToClassify, manualClassifications]);
-
   return (
     <div className="space-y-6 p-4 md:p-8">
-      <Dialog open={vehiclesToClassify.length > 0}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Vehicle Classification Required</DialogTitle>
-            <DialogDescription>
-              Some vehicles require manual classification. Please select a category for each to continue.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            {vehiclesToClassify.map((vehicleId) => (
-              <div key={vehicleId} className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor={`vehicle-${vehicleId}`} className="text-right col-span-1 truncate" title={vehicleId}>
-                  {vehicleId}
-                </Label>
-                <div className="col-span-3">
-                    <Select onValueChange={(value: VehicleType) => handleClassificationChange(vehicleId, value)}>
-                      <SelectTrigger id={`vehicle-${vehicleId}`}>
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="LGV">LGV (Light Goods Vehicle)</SelectItem>
-                        <SelectItem value="MGV">MGV (Medium Goods Vehicle)</SelectItem>
-                        <SelectItem value="HGV">HGV (Heavy Goods Vehicle)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                </div>
-              </div>
-            ))}
-          </div>
-          <DialogFooter>
-            <Button onClick={handleContinueClassification} disabled={!isClassificationComplete || isLoading}>
-                {isLoading ? 'Processing...' : 'Continue Calculation'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <FileUpload fileType="trips" title="1. Upload Trips CSV" onFileUpload={handleFileUpload} fileName={files.trips?.name || null} />
         <FileUpload fileType="vehicles" title="2. Upload Vehicles CSV" onFileUpload={handleFileUpload} fileName={files.vehicles?.name || null} />
