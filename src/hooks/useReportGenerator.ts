@@ -104,6 +104,12 @@ export const useReportGenerator = () => {
         setAssumptionNotes(prev => [...prev, "Could not find 'Trip Completed At' column. This will be left blank."]);
       }
 
+      const extractPincode = (location: string): string => {
+        if (!location) return 'UNKNOWN';
+        const pincodeMatch = location.match(/\b\d{6}\b/);
+        return pincodeMatch ? pincodeMatch[0] : location;
+      };
+
       // --- Stage 1: Consolidation ---
       const consolidatedTripsMap = new Map();
       let invalidDateRows = 0;
@@ -132,7 +138,9 @@ export const useReportGenerator = () => {
           continue;
         }
 
-        const compositeKey = `${vehicleId}-${source}-${destination}-${tripDate}`;
+        const sourceIdentifier = extractPincode(source);
+        const destinationIdentifier = extractPincode(destination);
+        const compositeKey = `${vehicleId}-${sourceIdentifier}-${destinationIdentifier}-${tripDate}`;
 
         const existingTrip = consolidatedTripsMap.get(compositeKey);
         if (existingTrip) {
