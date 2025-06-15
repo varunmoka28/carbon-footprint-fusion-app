@@ -1,4 +1,3 @@
-
 // Emission factors in kg CO2e/km
 export const EMISSION_FACTORS = {
   'LGV': 0.34, // Light Goods Vehicle
@@ -8,3 +7,11 @@ export const EMISSION_FACTORS = {
 };
 
 export type VehicleType = keyof typeof EMISSION_FACTORS;
+
+// Emission factors for fuels
+export const FUEL_EMISSION_FACTORS = {
+  'Diesel': 2.68, // kg CO2e/liter
+  'CNG': 2.75,    // kg CO2e/kg
+};
+
+export type FuelType = keyof typeof FUEL_EMISSION_FACTORS;
