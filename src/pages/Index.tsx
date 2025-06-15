@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import LogisticsEmissionCalculator from '@/components/LogisticsEmissionCalculator';
 import B2BLogisticsDashboard from '@/components/B2BLogisticsDashboard';
 import ToolCard from '@/components/ToolCard';
 import { Button } from '@/components/ui/button';
-import { Leaf, BookOpen, BarChart2, Calculator, Users, ArrowLeft } from 'lucide-react';
+import { Leaf, BookOpen, BarChart2, Calculator, ArrowLeft } from 'lucide-react';
 
 type ActiveTool = 'home' | 'b2bDashboard' | 'logisticsCalculator';
 
@@ -23,30 +22,23 @@ const Index = () => {
         return (
           <div className="py-12 text-center animate-fade-in">
             <h2 className="text-3xl font-bold tracking-tight text-slate-800 sm:text-4xl">
-              Your Suite of Sustainability Tools
+              Logistics & Supply Chain Carbon Accounting
             </h2>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-              Select a tool below to begin analyzing and reducing your carbon footprint.
+              Calculate and analyze your Scope 3 transportation emissions.
             </p>
-            <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
+            <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2 max-w-4xl mx-auto">
               <ToolCard
                 title="Logistics Emission Calculator"
-                description="Calculate carbon emissions for individual trips using distance or fuel consumption."
+                description="Estimate emissions for individual freight shipments based on distance, fuel, and load weight."
                 icon={Calculator}
                 onClick={() => setActiveTool('logisticsCalculator')}
               />
               <ToolCard
                 title="B2B Logistics Dashboard"
-                description="Analyze bulk transportation data from CSV uploads for comprehensive emissions reporting."
+                description="Analyze bulk transportation data by uploading CSV files to calculate and visualize your comprehensive Scope 3 logistics footprint."
                 icon={BarChart2}
                 onClick={() => setActiveTool('b2bDashboard')}
-              />
-              <ToolCard
-                title="Employee Commute Calculator"
-                description="Calculate and track employee commuting emissions."
-                icon={Users}
-                onClick={() => {}}
-                isComingSoon
               />
             </div>
           </div>
@@ -64,7 +56,7 @@ const Index = () => {
               <h1 className="text-xl md:text-2xl font-poppins font-bold text-slate-800">
                 Gocarbontracker <span className="text-eco-green">Tools</span>
               </h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">A tool for Last Mile Carbon Emissions</p>
+              <p className="text-xs text-muted-foreground hidden sm:block">Corporate Scope 3 Transportation Emissions Platform</p>
             </div>
           </div>
           <nav className="flex items-center gap-4">
