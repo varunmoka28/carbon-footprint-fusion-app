@@ -91,7 +91,7 @@ const Methodology = () => {
               </TableBody>
             </Table>
             <p className="text-xs text-muted-foreground mt-4">
-              Source: Emission factors are derived from industry standards like the GLEC Framework and are adapted for common vehicle types in the Indian market. Values are illustrative for demonstration.
+              Vehicle emission factors are derived from industry standards like the <a href="https://www.smartfreightcentre.org/en/glec-framework/" target="_blank" rel="noopener noreferrer" className="underline hover:text-eco-green">GLEC Framework</a> and are adapted for the Indian market. Fuel emission factors are based on <a href="https://www.ipcc-nggip.iges.or.jp/public/2006gl/" target="_blank" rel="noopener noreferrer" className="underline hover:text-eco-green">IPCC 2006 Guidelines</a>, with electricity factors from local reports. Values are illustrative for demonstration.
             </p>
           </CardContent>
         </Card>
@@ -145,13 +145,13 @@ const Methodology = () => {
           <CardContent className="space-y-4">
             <ul className="list-disc list-inside space-y-2 text-muted-foreground">
               <li>
-                <strong>Distance Calculation:</strong> If trip distance is not provided in the uploaded data, it is estimated using the straight-line (Haversine) distance between the source and destination pincodes, plus a circuity factor of 25% to account for actual road networks.
+                <strong>Distance Calculation:</strong> Distance is estimated using the straight-line (Haversine) distance between the geographic coordinates of the source and destination locations (resolved via pincode or city name), plus a circuity factor of 25% to account for actual road networks.
               </li>
               <li>
                 <strong>Vehicle Data:</strong> If vehicle category is missing, the system applies a default emission factor corresponding to a Light Commercial Vehicle (LCV). The load weight entered is validated against the selected vehicle's maximum payload capacity.
               </li>
               <li>
-                <strong>Data Completeness:</strong> The accuracy of the report is directly dependent on the quality and completeness of the uploaded trip and vehicle data.
+                <strong>Data Completeness:</strong> The accuracy of the report is directly dependent on the quality of the input data.
               </li>
               <li>
                 <strong>Scope:</strong> The calculation only covers tank-to-wheel emissions from fuel combustion during transit and does not include well-to-tank emissions, vehicle manufacturing, or other lifecycle emissions.
