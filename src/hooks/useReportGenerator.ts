@@ -7,8 +7,22 @@ export interface ReportGeneratorInput {
   vehiclesFile: File | null;
 }
 
+export interface ReportRow {
+  'Physical Trip ID': string;
+  'Assignment UID(s) Included': string;
+  'Consignment Note UID(s)': string;
+  'Vehicle No.': string;
+  'Source': string;
+  'Destination': string;
+  'Running Distance (km)': number;
+  'Representative Trip Completed At': string;
+  'Vehicle Category': VehicleType | 'UNKNOWN';
+  'Emission Factor (kg CO₂e/km)': number;
+  'Calculated Carbon Emissions (kg CO₂e)': number;
+}
+
 export const useReportGenerator = () => {
-  const [report, setReport] = useState<any[]>([]);
+  const [report, setReport] = useState<ReportRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [assumptionNotes, setAssumptionNotes] = useState<string[]>([]);
@@ -151,13 +165,13 @@ export const useReportGenerator = () => {
       const consolidatedTrips = Array.from(consolidatedTripsMap.values());
 
       // --- Stage 2: Calculation ---
-      const processedData = consolidatedTrips.map((trip) => {
+      const processedData: ReportRow[] = consolidatedTrips.map((trip, index) => {
         const vehicle_class_raw = vehicleClassKey ? (vehicleMap.get(trip.vehicle_no) || 'UNKNOWN') : 'HGV';
         const vehicle_class = (Object.keys(EMISSION_FACTORS).includes(vehicle_class_raw.toUpperCase()) ? vehicle_class_raw.toUpperCase() : 'UNKNOWN') as VehicleType;
         const emission_factor = EMISSION_FACTORS[vehicle_class];
 
         return {
-          'Physical Trip ID': trip.physical_trip_id,
+          'Physical Trip ID': `TRIP-${index + 1}`,
           'Assignment UID(s) Included': Array.from(trip.assignment_uids).join(', '),
           'Consignment Note UID(s)': Array.from(trip.consignment_note_uids).join(', '),
           'Vehicle No.': trip.vehicle_no,
@@ -169,7 +183,7 @@ export const useReportGenerator = () => {
           'Emission Factor (kg CO₂e/km)': emission_factor,
           'Calculated Carbon Emissions (kg CO₂e)': trip.distance_km * emission_factor,
         };
-      }).filter((t: any) => !isNaN(t['Running Distance (km)']) && !isNaN(t['Calculated Carbon Emissions (kg CO₂e)']));
+      }).filter((t) => !isNaN(t['Running Distance (km)']) && !isNaN(t['Calculated Carbon Emissions (kg CO₂e)']));
       
       setReport(processedData);
 

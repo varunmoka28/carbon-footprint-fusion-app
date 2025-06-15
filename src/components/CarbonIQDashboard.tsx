@@ -5,9 +5,10 @@ import KPICard from './KPICard';
 import EmissionsChart from './EmissionsChart';
 import TripDataTable from './TripDataTable';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, ArrowRight, BarChart, Info, Route, Tractor } from 'lucide-react';
+import { AlertCircle, ArrowRight, BarChart, Info, Route, Tractor, PieChart as PieChartIcon } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useReportGenerator } from '@/hooks/useReportGenerator';
+import { useReportGenerator, ReportRow } from '@/hooks/useReportGenerator';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const CarbonIQDashboard = () => {
   const [files, setFiles] = useState<{ trips: File | null; vehicles: File | null }>({ trips: null, vehicles: null });
@@ -26,12 +27,12 @@ const CarbonIQDashboard = () => {
     if (report.length === 0) return { totalEmissions: 0, totalDistance: 0, totalTrips: 0 };
     
     const totalEmissions = report.reduce((sum, trip) => {
-      const emissions = Number(trip['Calculated Carbon Emissions (kg CO₂e)']);
+      const emissions = trip['Calculated Carbon Emissions (kg CO₂e)'];
       return sum + (isNaN(emissions) ? 0 : emissions);
     }, 0);
 
     const totalDistance = report.reduce((sum, trip) => {
-      const distance = Number(trip['Running Distance (km)']);
+      const distance = trip['Running Distance (km)'];
       return sum + (isNaN(distance) ? 0 : distance);
     }, 0);
 
@@ -40,9 +41,9 @@ const CarbonIQDashboard = () => {
 
   const chartData = useMemo(() => {
     if (report.length === 0) return [];
-    const emissionsByClass = report.reduce((acc: Record<string, number>, trip: any) => {
+    const emissionsByClass = report.reduce((acc: Record<string, number>, trip: ReportRow) => {
       const vehicleClass = trip['Vehicle Category'];
-      const emissions = Number(trip['Calculated Carbon Emissions (kg CO₂e)']);
+      const emissions = trip['Calculated Carbon Emissions (kg CO₂e)'];
       if (vehicleClass && !isNaN(emissions)) {
         acc[vehicleClass] = (acc[vehicleClass] || 0) + emissions;
       }
@@ -88,8 +89,19 @@ const CarbonIQDashboard = () => {
         <KPICard title="Total Distance" value={kpiData.totalDistance.toFixed(0)} unit="km" icon={Route} />
         <KPICard title="Total Trips" value={String(kpiData.totalTrips)} unit="Trips Analyzed" icon={Tractor} />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <EmissionsChart data={chartData} />
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base font-semibold">Emissions Breakdown</CardTitle>
+            <PieChartIcon className="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="h-[350px] w-full flex items-center justify-center">
+             <p className="text-muted-foreground">Pie chart coming soon.</p>
+          </CardContent>
+        </Card>
+      </div>
+      <div>
         <TripDataTable data={report} />
       </div>
     </div>

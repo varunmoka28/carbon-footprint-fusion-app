@@ -10,7 +10,7 @@ interface ChartData {
 
 const EmissionsChart = ({ data }: { data: ChartData[] }) => {
   return (
-    <Card className="col-span-1 lg:col-span-2">
+    <Card>
       <CardHeader>
         <CardTitle>Emissions by Vehicle Type</CardTitle>
       </CardHeader>

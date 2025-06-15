@@ -2,15 +2,16 @@
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ReportRow } from '@/hooks/useReportGenerator';
 
-const TripDataTable = ({ data }: { data: any[] }) => {
-  const headers = [
+const TripDataTable = ({ data }: { data: ReportRow[] }) => {
+  const headers: (keyof ReportRow)[] = [
     'Physical Trip ID', 'Assignment UID(s) Included', 'Consignment Note UID(s)', 'Vehicle No.',
     'Source', 'Destination', 'Running Distance (km)', 'Representative Trip Completed At',
     'Vehicle Category', 'Emission Factor (kg CO₂e/km)', 'Calculated Carbon Emissions (kg CO₂e)'
   ];
 
-  const renderCell = (trip: any, header: string) => {
+  const renderCell = (trip: ReportRow, header: keyof ReportRow) => {
     const value = trip[header];
     if (typeof value === 'number') {
       return value.toFixed(2);
@@ -19,7 +20,7 @@ const TripDataTable = ({ data }: { data: any[] }) => {
   };
 
   return (
-    <Card className="col-span-1 lg:col-span-3">
+    <Card>
       <CardHeader>
         <CardTitle>Processed Trip Data</CardTitle>
       </CardHeader>
@@ -42,7 +43,7 @@ const TripDataTable = ({ data }: { data: any[] }) => {
                 </TableRow>
               )) : (
                 <TableRow>
-                  <TableCell colSpan={headers.length} className="text-center h-24">No data to display.</TableCell>
+                  <TableCell colSpan={headers.length} className="text-center h-24">No data to display. Please generate a report.</TableCell>
                 </TableRow>
               )}
             </TableBody>
