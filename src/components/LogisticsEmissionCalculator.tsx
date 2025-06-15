@@ -12,7 +12,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { VEHICLE_CATEGORIES, FUEL_EMISSION_FACTORS, VehicleId, FUEL_VEHICLE_CATEGORIES, FuelVehicleId } from '@/lib/constants';
+import { VEHICLE_CATEGORIES, FUEL_EMISSION_FACTORS, VehicleId, FUEL_VEHICLE_CATEGORIES, FuelVehicleId, FuelType } from '@/lib/constants';
 import { MapPin, Route, Leaf, Fuel, Weight, Repeat, TestTube2, Waypoints, Truck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
@@ -22,7 +22,9 @@ import ResultDisplay, { Result } from './ResultDisplay';
 
 const vehicleIds = Object.keys(VEHICLE_CATEGORIES) as [VehicleId, ...VehicleId[]];
 const fuelVehicleIds = Object.keys(FUEL_VEHICLE_CATEGORIES) as [FuelVehicleId, ...FuelVehicleId[]];
-const fuelTypeIds = Object.keys(FUEL_EMISSION_FACTORS) as (keyof typeof FUEL_EMISSION_FACTORS)[];
+const fuelTypeIds = Object.keys(FUEL_EMISSION_FACTORS) as [FuelType, ...FuelType[]];
+
+const PincodeRegex = /^\d{6}$/;
 
 const formSchema = z.discriminatedUnion("calculationMode", [
   z.object({

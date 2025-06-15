@@ -1,3 +1,5 @@
+
+import { GLEC_SOURCE } from './sources';
 export type Vehicle = {
   name: string;
   emissionFactor: number; // kg CO2e/km
@@ -8,6 +10,11 @@ export type Vehicle = {
   // New optional fields for fuel calculator
   averageMileage?: number; // km/L
   examples?: string;
+};
+
+const GLEC_SOURCE = {
+  source: "GLEC Framework",
+  sourceUrl: "https://www.smartfreightcentre.org/glec-framework/"
 };
 
 // A detailed list of common Indian market vehicle categories
