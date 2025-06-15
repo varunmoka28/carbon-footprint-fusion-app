@@ -6,7 +6,7 @@ import VehiclesDashboard, { VehicleData } from './VehiclesDashboard';
 import TripDataTable from './TripDataTable';
 import TripDetailModal from './TripDetailModal';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, ArrowRight, BarChart, Info, Route, Tractor } from 'lucide-react';
+import { AlertCircle, ArrowRight, BarChart, Info, Route, Tractor, Truck } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useReportGenerator, ReportRow } from '@/hooks/useReportGenerator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -87,7 +87,7 @@ const CarbonIQDashboard = () => {
   };
 
   const kpiData = useMemo(() => {
-    if (report.length === 0) return { totalEmissions: 0, totalDistance: 0, totalTrips: 0 };
+    if (report.length === 0) return { totalEmissions: 0, totalDistance: 0, totalTrips: 0, totalVehicles: 0 };
     
     const totalEmissions = report.reduce((sum, trip) => {
       const emissions = trip['Calculated Carbon Emissions (kg CO₂e)'];
@@ -99,7 +99,9 @@ const CarbonIQDashboard = () => {
       return sum + (isNaN(distance) ? 0 : distance);
     }, 0);
 
-    return { totalEmissions, totalDistance, totalTrips: report.length };
+    const totalVehicles = new Set(report.map(trip => trip['Vehicle No.'])).size;
+
+    return { totalEmissions, totalDistance, totalTrips: report.length, totalVehicles };
   }, [report]);
 
   const vehicleDashboardData = useMemo((): VehicleData[] => {
@@ -216,10 +218,11 @@ const CarbonIQDashboard = () => {
           </AlertDescription>
         </Alert>
       )}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KPICard title="Total Emissions" value={kpiData.totalEmissions.toFixed(0)} unit="kg CO₂e" icon={BarChart} />
         <KPICard title="Total Distance" value={kpiData.totalDistance.toFixed(0)} unit="km" icon={Route} />
         <KPICard title="Total Trips" value={String(kpiData.totalTrips)} unit="Trips Analyzed" icon={Tractor} />
+        <KPICard title="Total Vehicles" value={String(kpiData.totalVehicles)} unit="Vehicles Analyzed" icon={Truck} />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <VehiclesDashboard data={vehicleDashboardData} />
