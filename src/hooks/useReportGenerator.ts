@@ -57,7 +57,7 @@ export const useReportGenerator = () => {
       // --- Vehicle Data Mapping ---
       const vehicleMap = new Map();
       const vehicleIdKeys = ['vehiclenumber', 'vehicle no', 'reg no', 'vehicleid', 'registration', 'current vehicle no', 'currentvehicleno'];
-      const vehicleClassKeys = ['vehicleclass', 'category', 'type', 'vehiclemodel'];
+      const vehicleClassKeys = ['vehicleclass', 'category', 'type', 'vehiclemodel', 'details.rc_vch_catg'];
       
       const vehicleIdKey = findKey(vehiclesData[0], vehicleIdKeys);
       const vehicleClassKey = findKey(vehiclesData[0], vehicleClassKeys);
