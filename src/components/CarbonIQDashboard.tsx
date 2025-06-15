@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import Papa from 'papaparse';
 import FileUpload from './FileUpload';
@@ -33,6 +32,7 @@ const CarbonIQDashboard = () => {
   
   // A simplified semantic matcher
   const findKey = (obj: any, potentialKeys: string[]) => {
+    if (!obj) return null;
     const lowerCaseKeys = Object.keys(obj).map(k => k.toLowerCase());
     for (const pKey of potentialKeys) {
       const foundKey = Object.keys(obj)[lowerCaseKeys.indexOf(pKey.toLowerCase())];
@@ -53,19 +53,36 @@ const CarbonIQDashboard = () => {
       const tripsData = await parseCsv(files.trips);
       const vehiclesData = await parseCsv(files.vehicles);
 
-      const vehicleMap = new Map();
-      const vehicleIdKey = findKey(vehiclesData[0], ['vehicle_id', 'vehicleid', 'id', 'truck_id']);
-      const vehicleClassKey = findKey(vehiclesData[0], ['class', 'vehicle_class', 'type', 'vehicle_type']);
+      if (!vehiclesData || vehiclesData.length === 0) {
+        throw new Error("The vehicles CSV file appears to be empty or is not a valid CSV.");
+      }
+      if (!tripsData || tripsData.length === 0) {
+          throw new Error("The trips CSV file appears to be empty or is not a valid CSV.");
+      }
 
-      if (!vehicleIdKey || !vehicleClassKey) throw new Error("Could not find required columns in vehicles CSV.");
+      const vehicleMap = new Map();
+      const vehicleIdKeys = ['vehicle_id', 'vehicleid', 'id', 'truck_id'];
+      const vehicleClassKeys = ['class', 'vehicle_class', 'type', 'vehicle_type'];
+      
+      const vehicleIdKey = findKey(vehiclesData[0], vehicleIdKeys);
+      const vehicleClassKey = findKey(vehiclesData[0], vehicleClassKeys);
+
+      if (!vehicleIdKey) throw new Error(`Vehicles CSV Error: Missing vehicle identifier. Expected a column like: ${vehicleIdKeys.join(', ')}.`);
+      if (!vehicleClassKey) throw new Error(`Vehicles CSV Error: Missing vehicle class. Expected a column like: ${vehicleClassKeys.join(', ')}.`);
 
       vehiclesData.forEach((v: any) => vehicleMap.set(String(v[vehicleIdKey]), v[vehicleClassKey]));
       
-      const tripVehicleIdKey = findKey(tripsData[0], ['vehicle_id', 'vehicleid', 'id', 'truck_id']);
-      const distanceKey = findKey(tripsData[0], ['distance', 'distance_km', 'km']);
-      const tripIdKey = findKey(tripsData[0], ['trip_id', 'tripid']);
+      const tripVehicleIdKeys = ['vehicle_id', 'vehicleid', 'id', 'truck_id'];
+      const distanceKeys = ['distance', 'distance_km', 'km'];
+      const tripIdKeys = ['trip_id', 'tripid'];
 
-      if (!tripVehicleIdKey || !distanceKey || !tripIdKey) throw new Error("Could not find required columns in trips CSV.");
+      const tripVehicleIdKey = findKey(tripsData[0], tripVehicleIdKeys);
+      const distanceKey = findKey(tripsData[0], distanceKeys);
+      const tripIdKey = findKey(tripsData[0], tripIdKeys);
+
+      if (!tripVehicleIdKey) throw new Error(`Trips CSV Error: Missing vehicle identifier. Expected a column like: ${tripVehicleIdKeys.join(', ')}.`);
+      if (!distanceKey) throw new Error(`Trips CSV Error: Missing distance column. Expected a column like: ${distanceKeys.join(', ')}.`);
+      if (!tripIdKey) throw new Error(`Trips CSV Error: Missing trip identifier. Expected a column like: ${tripIdKeys.join(', ')}.`);
 
       const processedData: ProcessedTrip[] = tripsData.map((trip: any) => {
         const vehicle_id = String(trip[tripVehicleIdKey]);
