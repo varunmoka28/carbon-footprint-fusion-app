@@ -1,95 +1,73 @@
 import React from 'react';
 
-// A comprehensive dictionary mapping location names to SVG coordinates.
-const locations: Record<string, { x: number; y: number }> = {
+// A comprehensive dictionary mapping 6-digit pincodes to SVG coordinates and names.
+const locations: Record<string, { x: number; y: number; name: string }> = {
   // North
-  'JAMMU AND KASHMIR': { x: 380, y: 50 },
-  'SRINAGAR': { x: 370, y: 70 },
-  'LEH': { x: 420, y: 60 },
-  'HIMACHAL PRADESH': { x: 400, y: 130 },
-  'SHIMLA': { x: 405, y: 145 },
-  'PUNJAB': { x: 360, y: 180 },
-  'CHANDIGARH': { x: 390, y: 185 },
-  'AMRITSAR': { x: 350, y: 160 },
-  'UTTARAKHAND': { x: 440, y: 190 },
-  'DEHRADUN': { x: 430, y: 200 },
-  'HARYANA': { x: 380, y: 230 },
-  'GURUGRAM': { x: 395, y: 265 },
-  'GURGAON': { x: 395, y: 265 },
-  'DELHI': { x: 400, y: 260 },
-  'UTTAR PRADESH': { x: 480, y: 320 },
-  'LUCKNOW': { x: 470, y: 340 },
-  'AGRA': { x: 420, y: 320 },
-  'NOIDA': { x: 410, y: 270 },
+  '190001': { x: 370, y: 70, name: 'Srinagar' },
+  '171001': { x: 405, y: 145, name: 'Shimla' },
+  '160017': { x: 390, y: 185, name: 'Chandigarh' },
+  '143001': { x: 350, y: 160, name: 'Amritsar' },
+  '248001': { x: 430, y: 200, name: 'Dehradun' },
+  '122001': { x: 395, y: 265, name: 'Gurugram' },
+  '110001': { x: 400, y: 260, name: 'Delhi' },
+  '226001': { x: 470, y: 340, name: 'Lucknow' },
+  '282001': { x: 420, y: 320, name: 'Agra' },
+  '201301': { x: 410, y: 270, name: 'Noida' },
 
   // West
-  'RAJASTHAN': { x: 280, y: 330 },
-  'JAIPUR': { x: 360, y: 330 },
-  'JODHPUR': { x: 300, y: 360 },
-  'UDAIPUR': { x: 320, y: 410 },
-  'PRATAPGARH': { x: 340, y: 420 }, // Added
-  'GUJARAT': { x: 220, y: 480 },
-  'AHMEDABAD': { x: 260, y: 490 },
-  'SURAT': { x: 270, y: 550 },
-  'MAHARASHTRA': { x: 340, y: 600 },
-  'MUMBAI': { x: 290, y: 630 },
-  'PUNE': { x: 320, y: 650 },
-  'NAGPUR': { x: 430, y: 560 },
-  'GOA': { x: 310, y: 730 },
+  '302001': { x: 360, y: 330, name: 'Jaipur' },
+  '342001': { x: 300, y: 360, name: 'Jodhpur' },
+  '313001': { x: 320, y: 410, name: 'Udaipur' },
+  '312605': { x: 340, y: 420, name: 'Pratapgarh' },
+  '380001': { x: 260, y: 490, name: 'Ahmedabad' },
+  '395003': { x: 270, y: 550, name: 'Surat' },
+  '400001': { x: 290, y: 630, name: 'Mumbai' },
+  '411001': { x: 320, y: 650, name: 'Pune' },
+  '440001': { x: 430, y: 560, name: 'Nagpur' },
+  '403001': { x: 310, y: 730, name: 'Goa' },
 
   // East
-  'BIHAR': { x: 580, y: 350 },
-  'PATNA': { x: 570, y: 360 },
-  'JHARKHAND': { x: 570, y: 440 },
-  'RANCHI': { x: 560, y: 450 },
-  'ODISHA': { x: 550, y: 550 },
-  'BHUBANESWAR': { x: 570, y: 560 },
-  'WEST BENGAL': { x: 630, y: 450 },
-  'KOLKATA': { x: 650, y: 480 },
-  'SIKKIM': { x: 650, y: 300 },
-  'ARUNACHAL PRADESH': { x: 750, y: 250 },
-  'NAGALAND': { x: 760, y: 340 },
-  'MANIPUR': { x: 750, y: 380 },
-  'MIZORAM': { x: 730, y: 430 },
-  'TRIPURA': { x: 700, y: 420 },
-  'MEGHALAYA': { x: 690, y: 350 },
-  'ASSAM': { x: 720, y: 330 },
-  'GUWAHATI': { x: 700, y: 340 },
-  
+  '800001': { x: 570, y: 360, name: 'Patna' },
+  '834001': { x: 560, y: 450, name: 'Ranchi' },
+  '751001': { x: 570, y: 560, name: 'Bhubaneswar' },
+  '700001': { x: 650, y: 480, name: 'Kolkata' },
+  '737101': { x: 650, y: 300, name: 'Sikkim' },
+  '781001': { x: 700, y: 340, name: 'Guwahati' },
+
   // Central
-  'MADHYA PRADESH': { x: 430, y: 450 },
-  'BHOPAL': { x: 410, y: 480 },
-  'INDORE': { x: 360, y: 500 },
-  'CHHATTISGARH': { x: 510, y: 520 },
-  'RAIPUR': { x: 500, y: 540 },
+  '462001': { x: 410, y: 480, name: 'Bhopal' },
+  '452001': { x: 360, y: 500, name: 'Indore' },
+  '492001': { x: 500, y: 540, name: 'Raipur' },
 
   // South
-  'TELANGANA': { x: 430, y: 670 },
-  'HYDERABAD': { x: 420, y: 690 },
-  'ANDHRA PRADESH': { x: 450, y: 750 },
-  'VISAKHAPATNAM': { x: 520, y: 680 },
-  'KARNATAKA': { x: 380, y: 780 },
-  'BIJAPUR': { x: 360, y: 710 }, // Added
-  'BENGALURU': { x: 410, y: 810 },
-  'BANGALORE': { x: 410, y: 810 },
-  'MANGALORE': { x: 350, y: 810 },
-  'TAMIL NADU': { x: 420, y: 880 },
-  'CHENNAI': { x: 460, y: 820 },
-  'COIMBATORE': { x: 400, y: 870 },
-  'MADURAI': { x: 420, y: 910 },
-  'KERALA': { x: 380, y: 900 },
-  'KOCHI': { x: 380, y: 910 },
-  'THIRUVANANTHAPURAM': { x: 390, y: 950 },
+  '500001': { x: 420, y: 690, name: 'Hyderabad' },
+  '530001': { x: 520, y: 680, name: 'Visakhapatnam' },
+  '586101': { x: 360, y: 710, name: 'Bijapur' },
+  '560001': { x: 410, y: 810, name: 'Bengaluru' },
+  '575001': { x: 350, y: 810, name: 'Mangalore' },
+  '600001': { x: 460, y: 820, name: 'Chennai' },
+  '641001': { x: 400, y: 870, name: 'Coimbatore' },
+  '625001': { x: 420, y: 910, name: 'Madurai' },
+  '682001': { x: 380, y: 910, name: 'Kochi' },
+  '695001': { x: 390, y: 950, name: 'Thiruvananthapuram' },
 };
 
-// Sort keys by length descending to match more specific names first (e.g., "UTTAR PRADESH" before "PRADESH")
-const sortedLocationKeys = Object.keys(locations).sort((a, b) => b.length - a.length);
-
-const findCoords = (place: string): { key: string; coords: { x: number; y: number } } | null => {
+/**
+ * Finds coordinates by extracting a 6-digit pincode from a location string.
+ * @param place The string containing location information and a pincode.
+ * @returns An object with pincode, name, and coordinates, or null if not found.
+ */
+const findCoords = (place: string): { key: string; name: string; coords: { x: number; y: number } } | null => {
   if (!place) return null;
-  const upperPlace = place.toUpperCase();
-  const foundKey = sortedLocationKeys.find(key => upperPlace.includes(key));
-  return foundKey ? { key: foundKey, coords: locations[foundKey] } : null;
+  const pincodeMatch = place.match(/\b(\d{6})\b/);
+  if (pincodeMatch) {
+    const pincode = pincodeMatch[1];
+    const locationData = locations[pincode];
+    if (locationData) {
+      return { key: pincode, ...locationData };
+    }
+  }
+  return null;
 };
 
 interface IndiaMapProps {
@@ -100,12 +78,16 @@ interface IndiaMapProps {
 const IndiaMap = ({ origin = '', destination = '' }: IndiaMapProps) => {
   const originInfo = findCoords(origin);
   const destInfo = findCoords(destination);
-  const unmappedLocations: string[] = [];
-  if (origin && !originInfo) {
-    unmappedLocations.push(origin);
+
+  const unmappedPincodes: string[] = [];
+  const originPincode = origin.match(/\b(\d{6})\b/)?.[1];
+  const destPincode = destination.match(/\b(\d{6})\b/)?.[1];
+
+  if (origin && originPincode && !originInfo) {
+    unmappedPincodes.push(originPincode);
   }
-  if (destination && !destInfo) {
-    unmappedLocations.push(destination);
+  if (destination && destPincode && !destInfo) {
+    unmappedPincodes.push(destPincode);
   }
 
   // A more detailed, high-quality SVG path for India's outline.
@@ -165,7 +147,7 @@ const IndiaMap = ({ origin = '', destination = '' }: IndiaMapProps) => {
             <circle cx={originInfo.coords.x} cy={originInfo.coords.y} r="8" fill="rgba(59, 130, 246, 0.4)" />
             <circle cx={originInfo.coords.x} cy={originInfo.coords.y} r="4" fill="#3B82F6" />
             <text x={originInfo.coords.x + 12} y={originInfo.coords.y + 5} className="location-label" fill="#3B82F6">
-              {originInfo.key}
+              {originInfo.name}
             </text>
           </g>
         )}
@@ -176,15 +158,15 @@ const IndiaMap = ({ origin = '', destination = '' }: IndiaMapProps) => {
             <circle cx={destInfo.coords.x} cy={destInfo.coords.y} r="8" fill="rgba(239, 68, 68, 0.4)" />
             <circle cx={destInfo.coords.x} cy={destInfo.coords.y} r="4" fill="#EF4444" />
             <text x={destInfo.coords.x + 12} y={destInfo.coords.y + 5} className="location-label" fill="#EF4444">
-              {destInfo.key}
+              {destInfo.name}
             </text>
           </g>
         )}
 
         {!originInfo && !destInfo && origin && destination && (
-            <text x="50%" y="50%" textAnchor="middle" fill="#6B7280" fontSize="16px" fontFamily="Poppins, sans-serif">
-                Route data unavailable.
-            </text>
+          <text x="50%" y="50%" textAnchor="middle" fill="#6B7280" fontSize="16px" fontFamily="Poppins, sans-serif">
+            Route data unavailable.
+          </text>
         )}
         
         {/* Arrowhead definition for the line */}
@@ -201,12 +183,12 @@ const IndiaMap = ({ origin = '', destination = '' }: IndiaMapProps) => {
           </marker>
         </defs>
       </svg>
-      {unmappedLocations.length > 0 && (
+      {unmappedPincodes.length > 0 && (
         <div className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-2 mt-2 w-full text-left">
           <p className="font-semibold">Note:</p>
           <ul className="list-disc list-inside pl-2">
-            {unmappedLocations.map((loc, index) => (
-              <li key={index}>The location "{loc}" could not be mapped.</li>
+            {unmappedPincodes.map((pincode, index) => (
+              <li key={index}>The location with pincode "{pincode}" could not be mapped.</li>
             ))}
           </ul>
         </div>
