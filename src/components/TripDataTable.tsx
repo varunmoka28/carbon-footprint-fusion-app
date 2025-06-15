@@ -3,6 +3,9 @@ import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ReportRow } from '@/hooks/useReportGenerator';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
+import { exportToCsv } from '@/lib/csvUtils';
 
 interface TripDataTableProps {
   data: ReportRow[];
@@ -16,6 +19,13 @@ const TripDataTable = ({ data, onRowClick }: TripDataTableProps) => {
     'Vehicle Category', 'Emission Factor (kg CO₂e/km)', 'Calculated Carbon Emissions (kg CO₂e)'
   ];
 
+  const handleDownload = () => {
+    if (data.length > 0) {
+      const timestamp = new Date().toISOString().split('T')[0];
+      exportToCsv(data, headers, `processed-trip-data-${timestamp}.csv`);
+    }
+  };
+
   const renderCell = (trip: ReportRow, header: keyof ReportRow) => {
     const value = trip[header];
     if (typeof value === 'number') {
@@ -26,8 +36,12 @@ const TripDataTable = ({ data, onRowClick }: TripDataTableProps) => {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Processed Trip Data</CardTitle>
+        <Button onClick={handleDownload} disabled={data.length === 0} variant="outline" size="sm">
+          <Download className="mr-2 h-4 w-4" />
+          Download CSV
+        </Button>
       </CardHeader>
       <CardContent>
         <div className="max-h-[400px] overflow-auto">
