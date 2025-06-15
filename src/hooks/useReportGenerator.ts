@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { EMISSION_FACTORS, VehicleType } from '@/lib/constants';
 import { parseCsv, findKey } from '@/lib/csvUtils';
@@ -51,7 +52,7 @@ export const useReportGenerator = () => {
       // --- Vehicle Data Mapping ---
       const vehicleMap = new Map();
       const vehicleIdKeys = ['vehiclenumber', 'vehicle no', 'reg no', 'vehicleid', 'registration', 'current vehicle no', 'currentvehicleno'];
-      const vehicleClassKeys = ['class', 'vehicle_class', 'type', 'vehicle_type'];
+      const vehicleClassKeys = ['vehicleclass', 'category', 'type', 'vehiclemodel'];
       
       const vehicleIdKey = findKey(vehiclesData[0], vehicleIdKeys);
       const vehicleClassKey = findKey(vehiclesData[0], vehicleClassKeys);
@@ -61,10 +62,14 @@ export const useReportGenerator = () => {
         throw new Error(`Vehicles CSV Error: Could not find a vehicle identifier column. Found columns: [${availableColumns}]. Expected a column header like 'Vehicle Number', 'Reg No', etc.`);
       }
       
-      if (!vehicleClassKey) {
-        setAssumptionNotes(prev => [...prev, "The 'vehicle class' column was not found in your vehicles file. All vehicles have been assumed to be 'HGV' for a conservative emission estimate."]);
+      if (vehicleClassKey) {
+        vehiclesData.forEach((v: any) => {
+            if(v[vehicleIdKey]) {
+                vehicleMap.set(String(v[vehicleIdKey]), v[vehicleClassKey])
+            }
+        });
       } else {
-        vehiclesData.forEach((v: any) => vehicleMap.set(String(v[vehicleIdKey]), v[vehicleClassKey]));
+        setAssumptionNotes(prev => [...prev, `The 'vehicle class' column was not found in your vehicles file (e.g., 'vehicleclass', 'category', 'type'). All vehicles have been assumed to be 'HGV' for a conservative emission estimate.`]);
       }
       
       // --- Trip Data Header Mapping ---
@@ -173,9 +178,33 @@ export const useReportGenerator = () => {
       const consolidatedTrips = Array.from(consolidatedTripsMap.values());
 
       // --- Stage 2: Calculation ---
+      const getVehicleCategory = (rawClass: string | undefined): VehicleType => {
+        if (!rawClass) return 'UNKNOWN';
+        const lowerClass = String(rawClass).toLowerCase();
+
+        const upperClass = String(rawClass).toUpperCase();
+        if (Object.keys(EMISSION_FACTORS).includes(upperClass)) {
+          return upperClass as VehicleType;
+        }
+
+        if (lowerClass.includes('heavy') || lowerClass.includes('hgv')) return 'HGV';
+        if (lowerClass.includes('medium') || lowerClass.includes('mgv')) return 'MGV';
+        if (lowerClass.includes('light') || lowerClass.includes('lgv')) return 'LGV';
+
+        return 'UNKNOWN';
+      };
+
       const processedData: ReportRow[] = consolidatedTrips.map((trip, index) => {
-        const vehicle_class_raw = vehicleClassKey ? (vehicleMap.get(trip.vehicle_no) || 'UNKNOWN') : 'HGV';
-        const vehicle_class = (Object.keys(EMISSION_FACTORS).includes(vehicle_class_raw.toUpperCase()) ? vehicle_class_raw.toUpperCase() : 'UNKNOWN') as VehicleType;
+        let vehicle_class: VehicleType;
+
+        if (vehicleClassKey) {
+          const raw_class_from_file = vehicleMap.get(trip.vehicle_no);
+          vehicle_class = getVehicleCategory(raw_class_from_file);
+        } else {
+          // Fallback logic: If no vehicle class column was found, assume HGV.
+          vehicle_class = 'HGV';
+        }
+        
         const emission_factor = EMISSION_FACTORS[vehicle_class];
 
         return {
